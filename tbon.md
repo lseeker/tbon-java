@@ -17,7 +17,7 @@ TBON - Typed Binary Object Notation
 0000 1100 uint16_t 0
 0000 1101 uint16_t 1B
 0000 1110 uint16_t 2B
-0000 1111
+0000 1111 char
 
 0001 0000 int32_t 0
 0001 0001 int32_t 4B
@@ -46,14 +46,14 @@ TBON - Typed Binary Object Notation
 0010 0110 dec64
 0010 0111 dec128
 
-0010 1000 char
+0010 1000 VDecimal
 0010 1001 time
 0010 1010 date
 0010 1011 datetime
 0010 1100 VInt 0
-0010 1101 VInt positive
-0010 1110 VInt negative
-0010 1111 VDecimal
+0010 1101 VInt positive 7be
+0010 1110 VInt negative 7be
+0010 1111 BigInteger with 7be len
 
 0011 xxxx Custom Type
 

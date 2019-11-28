@@ -13,11 +13,11 @@ TBON - Typed Binary Object Notation
 0000 1000 int16_t 0
 0000 1001 int16_t 1B
 0000 1010 int16_t 2B
-0000 1011 positive VInt
+0000 1011
 0000 1100 uint16_t 0
 0000 1101 uint16_t 1B
 0000 1110 uint16_t 2B
-0000 1111 negative VInt
+0000 1111
 
 0001 0000 int32_t 0
 0001 0001 int32_t 4B
@@ -26,7 +26,7 @@ TBON - Typed Binary Object Notation
 0001 0100 uint32_t 0
 0001 0101 uint32_t 4B
 0001 0110 uint32_t 7be LSB first (up to 24bits)
-0001 0111 VInt 0
+0001 0111
 
 0001 1000 int64_t 0
 0001 1001 int64_t 8B
@@ -50,9 +50,9 @@ TBON - Typed Binary Object Notation
 0010 1001 time
 0010 1010 date
 0010 1011 datetime
-0010 1100
-0010 1101
-0010 1110
+0010 1100 VInt 0
+0010 1101 VInt positive
+0010 1110 VInt negative
 0010 1111 VDecimal
 
 0011 xxxx Custom Type

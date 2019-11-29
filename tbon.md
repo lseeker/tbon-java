@@ -6,7 +6,7 @@ bin | hex | type | value
 0000 0000 | 0x00 | null | null
 0000 0001 | 0x01 | |
 0000 0010 | 0x02 | boolean | false
-0000 0011 | 0x03 | boolena | true
+0000 0011 | 0x03 | boolean | true
 
 ## Integer
 ### int8
@@ -54,14 +54,16 @@ bin | hex | type | value
 0001 1111 | 0x1f | | End of Stream Marker
 
 ## IEEE 754 float
-0010 0000 bin16
-0010 0001 bin32
-0010 0010 bin64
-0010 0011 bin128
-0010 0100 bin256
-0010 0101 dec32
-0010 0110 dec64
-0010 0111 dec128
+bin | hex | presentation
+--- | --- | ----
+0010 0000 | 0x20 | bin16
+0010 0001 | 0x21 | bin32
+0010 0010 | 0x22 | bin64
+0010 0011 | 0x23 | bin128
+0010 0100 | 0x24 | bin256
+0010 0101 | 0x25 | dec32
+0010 0110 | 0x26 | dec64
+0010 0111 | 0x27 | dec128
 
 ## Date/Time, Variable length numbers
 0010 1000 time
@@ -73,7 +75,7 @@ bin | hex | type | value
 0010 1110 VInt negative 7be
 0010 1111 BigInteger follows 7be length and 8bype octets
 
-## Variable lengts
+## Variable lengths
 0011 xxxx Custom Type
 0100 xxxx Array
 0101 xxxx Typed Array

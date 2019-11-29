@@ -66,20 +66,33 @@ bin | hex | presentation
 0010 0111 | 0x27 | dec128
 
 ## Date/Time, Variable length numbers
-0010 1000 time
-0010 1001 date
-0010 1010 datetime
-0010 1011 VDecimal
-0010 1100 VInt 0
-0010 1101 VInt positive 7be
-0010 1110 VInt negative 7be
-0010 1111 BigInteger follows 7be length and 8bype octets
+bin | hex | presentation
+--- | --- | ----
+0010 1000 | 0x28 | time
+0010 1001 | 0x29 | date
+0010 1010 | 0x2a | datetime
+0010 1011 | 0x2b | VDecimal
+0010 1100 | 0x2c | VInt 0
+0010 1101 | 0x2d | VInt positive 7be
+0010 1110 | 0x2e | VInt negative 7be
+0010 1111 | 0x2f |BigInteger follows 7be length and 8bype octets
 
 ## Variable lengths
-0011 xxxx Custom Type
-0100 xxxx Array
-0101 xxxx Typed Array
-0110 xxxx Object
-0111 xxxx Typed Object
-10xx xxxx octet
-11xx xxxx string
+bin | hex | presentation
+--- | --- | ----
+0011 xxxx | 0x3* | Custom Type
+0100 xxxx | 0x4* | Array
+0101 xxxx | 0x5* | Typed Array
+0110 xxxx | 0x6* | Object
+0111 xxxx | 0x7* | Typed Object
+10xx xxxx | 0x8+ | octet
+11xx xxxx | 0xc+ | string
+
+# Specs
+
+## 7bit encoded int (LSB first)
+
+## Variable length stream
+### Infinite variable length
+length all 1 bits + 0000 0000 => end with EOS marker
+

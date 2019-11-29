@@ -39,17 +39,19 @@ bin | hex | type | value
 0001 0100 | 0x14 | uint32 | 0
 0001 0101 | 0x15 | uint32 | 4B LSB first
 0001 0110 | 0x16 | uint32 | 7be LSB first (up to 24bits)
-0001 0111 | | |
+0001 0111 | 0x17 | |
 
 ### int64
-0001 1000 int64_t 0
-0001 1001 int64_t 8B
-0001 1010 int64_t p 7be
-0001 1011 int64_t n 7be
-0001 1100 uint64_t 0
-0001 1101 uint64_t 8B
-0001 1110 uint64_t 7be
-0001 1111 End of Stream Marker
+bin | hex | type | value
+--- | --- | -----| -------
+0001 1000 | 0x18 | int64 | 0
+0001 1001 | 0x19 | int64 | 8B
+0001 1010 | 0x1a | int64 p | 7be
+0001 1011 | 0x1b | int64 n | 7be
+0001 1100 | 0x1c | uint64 | 0
+0001 1101 | 0x1d | uint64 | 8B
+0001 1110 | 0x1e | uint64 | 7be
+0001 1111 | 0x1f | | End of Stream Marker
 
 ## IEEE 754 float
 0010 0000 bin16

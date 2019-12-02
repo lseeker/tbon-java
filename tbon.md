@@ -44,9 +44,9 @@ bin | hex | type | value
 0001 1001 | 0x19 | uint16 |
 0001 1010 | 0x1a | uint32 |
 0001 1011 | 0x1b | uint64 |
-0001 1100 | 0x1c | null | null
+0001 1100 | 0x1c | boolean | false
 0001 1101 | 0x1d | boolean | true
-0001 1110 | 0x1e | boolean | false
+0001 1110 | 0x1e | null | NULL
 0001 1111 | 0x1f | | End of Stream Marker
 
 ## IEEE 754 float

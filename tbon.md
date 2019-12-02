@@ -1,56 +1,52 @@
 # TBON - Typed Binary Object Notation
 
-## null, Boolean
-bin | hex | type | value
---- | --- | -----| -------
-0000 0000 | 0x00 | null | null
-0000 0001 | 0x01 | |
-0000 0010 | 0x02 | boolean | false
-0000 0011 | 0x03 | boolean | true
-
 ## Integer
-### int8
+### 0 (Zero)
 bin | hex | type | value
 --- | --- | -----| -------
-0000 0100 | 0x04 | int8 | 0
-0000 0101 | 0x05 | int8 | 1B
-0000 0110 | 0x06 | uint8 | 0
-0000 0111 | 0x07 | uint8 | 1B
+0000 0000 | 0x00 | int8 | 0
+0000 0001 | 0x01 | int16 | 0
+0000 0010 | 0x02 | int32 | 0
+0000 0011 | 0x03 | int64 | 0
+0000 0100 | 0x04 | uint8 | 0
+0000 0101 | 0x05 | uint16 | 0
+0000 0110 | 0x06 | uint32 | 0
+0000 0111 | 0x07 | uint64 | 0
 
-### int16, char
+### full bytes, MSB first
 bin | hex | type | value
 --- | --- | -----| -------
-0000 1000 | 0x08 | int16 | 0
-0000 1001 | 0x09 | int16 | 1B
-0000 1010 | 0x0a | int16 | 2B LSB first
-0000 1011 | 0x0b | |
-0000 1100 | 0x0c | uint16 | 0
-0000 1101 | 0x0d | uint16 | 1B
-0000 1110 | 0x0e | uint16 | 2B LSB first
-0000 1111 | 0x0f | char | UTF-8 one character
+0000 1000 | 0x08 | int8 | 1B
+0000 1001 | 0x09 | int16 | 2B
+0000 1010 | 0x0a | int32 | 4B
+0000 1011 | 0x0b | int64 | 8B
+0000 1100 | 0x0c | uint8 | 1B
+0000 1101 | 0x0d | uint16 | 2B
+0000 1110 | 0x0e | uint32 | 4B
+0000 1111 | 0x0f | uint64 | 8B
 
-### int32
+### signed variable bits (7bit enc LSB first)
 bin | hex | type | value
 --- | --- | -----| -------
-0001 0000 | 0x10 | int32 | 0
-0001 0001 | 0x11 | int32 | 4B LSB first
-0001 0010 | 0x12 | int32 p | 7be LSB first (up to 24bits)
-0001 0011 | 0x13 | int32 n | 7be LSB first (up to 24bits)
-0001 0100 | 0x14 | uint32 | 0
-0001 0101 | 0x15 | uint32 | 4B LSB first
-0001 0110 | 0x16 | uint32 | 7be LSB first (up to 24bits)
-0001 0111 | 0x17 | |
+0001 0000 | 0x10 | positive integer |
+0001 0001 | 0x11 | int16 p | 
+0001 0010 | 0x12 | int32 p |
+0001 0011 | 0x13 | int64 p |
+0001 0100 | 0x14 | negative integer |
+0001 0101 | 0x15 | int16 n |
+0001 0110 | 0x16 | int32 n |
+0001 0111 | 0x17 | int64 n |
 
-### int64
+### unsigned variable, null, and Boolean
 bin | hex | type | value
 --- | --- | -----| -------
-0001 1000 | 0x18 | int64 | 0
-0001 1001 | 0x19 | int64 | 8B
-0001 1010 | 0x1a | int64 p | 7be
-0001 1011 | 0x1b | int64 n | 7be
-0001 1100 | 0x1c | uint64 | 0
-0001 1101 | 0x1d | uint64 | 8B
-0001 1110 | 0x1e | uint64 | 7be
+0001 1000 | 0x18 | integer | 0
+0001 1001 | 0x19 | uint16 |
+0001 1010 | 0x1a | uint32 |
+0001 1011 | 0x1b | uint64 |
+0001 1100 | 0x1c | null | null
+0001 1101 | 0x1d | boolean | true
+0001 1110 | 0x1e | boolean | false
 0001 1111 | 0x1f | | End of Stream Marker
 
 ## IEEE 754 float
@@ -65,17 +61,17 @@ bin | hex | presentation
 0010 0110 | 0x26 | dec64
 0010 0111 | 0x27 | dec128
 
-## Date/Time, Variable length numbers
+## Date/Time, char, decimal
 bin | hex | presentation
 --- | --- | ----
 0010 1000 | 0x28 | time
 0010 1001 | 0x29 | date
 0010 1010 | 0x2a | datetime
-0010 1011 | 0x2b | VDecimal
-0010 1100 | 0x2c | VInt 0
-0010 1101 | 0x2d | VInt positive 7be
-0010 1110 | 0x2e | VInt negative 7be
-0010 1111 | 0x2f |BigInteger follows 7be length and 8bype octets
+0010 1011 | 0x2b | char
+0010 1100 | 0x2c | Positive decimal
+0010 1101 | 0x2d | Negative decimal
+0010 1110 | 0x2e |
+0010 1111 | 0x2f | BigInteger follows 7be length and 8bype octets
 
 ## Variable lengths
 bin | hex | presentation

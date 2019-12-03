@@ -68,9 +68,9 @@ bin | hex | presentation
 0010 1001 | 0x29 | date
 0010 1010 | 0x2a | datetime
 0010 1011 | 0x2b | char
-0010 1100 | 0x2c | Positive decimal
-0010 1101 | 0x2d | Negative decimal
-0010 1110 | 0x2e |
+0010 1100 | 0x2c |
+0010 1101 | 0x2d |
+0010 1110 | 0x2e | BigDecimal with 7be scale and BigInteger
 0010 1111 | 0x2f | BigInteger follows 7be length and 8bype octets
 
 ## Variable lengths

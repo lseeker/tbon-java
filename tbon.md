@@ -25,68 +25,71 @@ bin | hex | type | value
 0000 1110 | 0x0e | uint32 | 4B
 0000 1111 | 0x0f | uint64 | 8B
 
-### signed variable bits (7bit enc LSB first)
+### int16 1B / variable bits integer(7bit enc LSB first)
 bin | hex | type | value
 --- | --- | -----| -------
-0001 0000 | 0x10 | positive integer |
-0001 0001 | 0x11 | int16 p | 
-0001 0010 | 0x12 | int32 p |
-0001 0011 | 0x13 | int64 p |
-0001 0100 | 0x14 | negative integer |
-0001 0101 | 0x15 | int16 n |
-0001 0110 | 0x16 | int32 n |
-0001 0111 | 0x17 | int64 n |
+0001 0000 | 0x10 | int32 p |
+0001 0001 | 0x11 | int32 n | 
+0001 0010 | 0x12 | uint32 |
+0001 0011 | 0x13 | int16 | 1B
+0001 0100 | 0x14 | int64 p |
+0001 0101 | 0x15 | int64 n |
+0001 0110 | 0x16 | uint64 |
+0001 0111 | 0x17 | uint16 | 1B
 
-### unsigned variable, null, and Boolean
+### null, boolean, float and others
 bin | hex | type | value
 --- | --- | -----| -------
-0001 1000 | 0x18 | integer | 0
-0001 1001 | 0x19 | uint16 |
-0001 1010 | 0x1a | uint32 |
-0001 1011 | 0x1b | uint64 |
-0001 1100 | 0x1c | boolean | false
-0001 1101 | 0x1d | boolean | true
-0001 1110 | 0x1e | null | NULL
-0001 1111 | 0x1f | | End of Stream Marker
+0001 1000 | 0x18 | boolean | false
+0001 1001 | 0x19 | boolean | true
+0001 1010 | 0x1a | float32 |
+0001 1011 | 0x1b | float64 |
+0001 1100 | 0x1c | null | NULL
+0001 1101 | 0x1d | decimal | 0
+0001 1110 | 0x1e | decimal | Scale 6sbv + BI
+0001 1111 | 0x1f | EOS | End of Stream Marker
 
-## IEEE 754 float
+## Time, Date, and Character(uint32)
 bin | hex | presentation
 --- | --- | ----
-0010 0000 | 0x20 | bin16
-0010 0001 | 0x21 | bin32
-0010 0010 | 0x22 | bin64
-0010 0011 | 0x23 | bin128
-0010 0100 | 0x24 | bin256
-0010 0101 | 0x25 | dec32
-0010 0110 | 0x26 | dec64
-0010 0111 | 0x27 | dec128
+0010 0000 | 0x20 | time
+0010 0001 | 0x21 | date
+0010 0010 | 0x22 | datetime
+0010 0011 | 0x23 |
+0010 0100 | 0x24 | char 1B
+0010 0101 | 0x25 | char 2B
+0010 0110 | 0x26 | char 3B
+0010 0111 | 0x27 | char 4B
 
-## Date/Time, char, decimal
-bin | hex | presentation
---- | --- | ----
-0010 1000 | 0x28 | time
-0010 1001 | 0x29 | date
-0010 1010 | 0x2a | datetime
-0010 1011 | 0x2b | char
-0010 1100 | 0x2c | decimal, positive scale
-0010 1101 | 0x2d | decimal, negative scale
-0010 1110 | 0x2e |
-0010 1111 | 0x2f | BigInteger follows 7be length and 8bype octets
+## Java primitive arrays (follows 7bit enc len)
+bin | hex | type | element presentation
+--- | --- | ---- | ---
+0010 1000 | 0x28 | boolean[] | true or false
+0010 1001 | 0x29 | short[] | 2BE
+0010 1010 | 0x2a | int[] | signed 7bit encoding
+0010 1011 | 0x2b | long[] | signed 7bit encoding
+0010 1100 | 0x2c | float | 4BE
+0010 1101 | 0x2d | double | 8BE
+0010 1110 | 0x2e | char[] | 2BE (unsigned)
+0010 1111 | 0x2f | |
 
 ## Variable lengths
 bin | hex | presentation
 --- | --- | ----
-0011 xxxx | 0x3* | Custom Type
+0011 0xxx | 0x30+ | BigInteger
+0011 1xxx | 0x38+ | Custom Type
 0100 xxxx | 0x4* | Array
-0101 xxxx | 0x5* | Typed Array
+0101 xxxx | 0x5* | Generic Array
 0110 xxxx | 0x6* | Object
-0111 xxxx | 0x7* | Typed Object
+0111 xxxx | 0x7* | Generic Object
 10xx xxxx | 0x8+ | octet
 11xx xxxx | 0xc+ | string
 
 # Specs
 
 ## 7bit encoded int (LSB first)
+
+## 7bit signed encoded int (LSB first)
 
 ## Variable length stream
 ### Infinite variable length

@@ -55,7 +55,7 @@ bin | hex | presentation
 0010 0000 | 0x20 | time
 0010 0001 | 0x21 | date
 0010 0010 | 0x22 | datetime
-0010 0011 | 0x23 |
+0010 0011 | 0x23 | datetime with timezone
 0010 0100 | 0x24 | char 1B
 0010 0101 | 0x25 | char 2B
 0010 0110 | 0x26 | char 3B
@@ -71,9 +71,10 @@ bin | hex | type | element presentation
 0010 1100 | 0x2c | float | 4BE
 0010 1101 | 0x2d | double | 8BE
 0010 1110 | 0x2e | char[] | 2BE (unsigned)
-0010 1111 | 0x2f | multidemension | 7be len + real array(s)
+0010 1111 | 0x2f | add a depth | 7be count, prepend on array
 
 ## Variable lengths
+xx present length, all 1 bits is stream mode
 bin | hex | presentation
 --- | --- | ----
 0011 0xxx | 0x30+ | BigInteger
@@ -83,15 +84,25 @@ bin | hex | presentation
 0110 xxxx | 0x6* | Object
 0111 xxxx | 0x7* | Generic Object
 10xx xxxx | 0x8+ | octet
-11xx xxxx | 0xc+ | string
+11xx xxxx | 0xc+ | string 
 
 # Specs
 
-## 7bit encoded int (LSB first)
+## 7bit encoded positive int (LSB first)
+- 1xxxxxx continue
+- 0xxxxxx last
 
 ## 7bit signed encoded int (LSB first)
+second bit is sign
+
 
 ## Variable length stream
-### Infinite variable length
-length all 1 bits + 0000 0000 => end with EOS marker
+follows 7be length, should not 0. 0 is undefined length (see below).
 
+### Undefined length structure
+0 presents undefined length. follows values on struct type.
+
+### octet and string stream
+0 + 7be length + data + 7be length + data + ... + 0
+
+last 0 is end of stream marker

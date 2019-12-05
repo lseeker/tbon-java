@@ -13,11 +13,4 @@
 		<project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>${encoding{</project.reporting.outputEncoding>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>kr.inode.bons</groupId>
-			<artifactId>bons-api</artifactId>
-			<version>0.1-SNAPSHOT</version>
-		</dependency>
-	</dependencies>
 </project>

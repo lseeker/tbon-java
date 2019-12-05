@@ -71,7 +71,7 @@ bin | hex | type | element presentation
 0010 1100 | 0x2c | float | 4BE
 0010 1101 | 0x2d | double | 8BE
 0010 1110 | 0x2e | char[] | 2BE (unsigned)
-0010 1111 | 0x2f | |
+0010 1111 | 0x2f | multidemension | follows depth 7be + real array
 
 ## Variable lengths
 bin | hex | presentation

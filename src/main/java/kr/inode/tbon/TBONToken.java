@@ -77,13 +77,13 @@ public enum TBONToken {
 	 */
 	String,
 	/**
+	 * Octet, byte[]
+	 */
+	Octet,
+	/**
 	 * start of boolean[]
 	 */
 	PrimitiveArrayOfBoolean,
-	/**
-	 * start of byte[]
-	 */
-	PrimitiveArrayOfByte,
 	/**
 	 * start of short[]
 	 */
@@ -113,23 +113,15 @@ public enum TBONToken {
 	 */
 	Array,
 	/**
-	 * start of generic array with type
-	 */
-	GenericArray,
-	/**
 	 * start of Map<String, Object>
 	 */
 	Object,
 	/**
-	 * start of generic map with type
+	 * custom typed
 	 */
-	GenericObject,
+	CustomType,
 	/**
 	 * end of array or end of object
 	 */
-	EndOfStructure,
-	/**
-	 * custom structure type
-	 */
-	CustomType
+	EndOfStructure
 }

@@ -43,20 +43,9 @@ public interface TBONParser extends Closeable {
 	// LocalDateTime getLocalDateTime();
 	// ZonedDateTime getZonedDateTime();
 
-	boolean isSurrogateChar();
-
 	char getChar();
 
-	char[] getChars();
-
 	String getString();
-
-	/**
-	 * array depth for multidimension array
-	 * 
-	 * @return array depth. 0 if current token is not array.
-	 */
-	int getDepth();
 
 	/**
 	 * element count of array or object.
@@ -64,27 +53,6 @@ public interface TBONParser extends Closeable {
 	 * @return element count. -1 if undefined.
 	 */
 	int getElementCount();
-
-	/**
-	 * array element type.
-	 * 
-	 * @return array element type. null if undefined.
-	 */
-	Class<?> getElementType();
-
-	/**
-	 * object key type.
-	 * 
-	 * @return object key type. null if custom type.
-	 */
-	Class<?> getKeyType();
-
-	/**
-	 * object value type.
-	 * 
-	 * @return object value type. null if custom type.
-	 */
-	Class<?> getValueType();
 
 	/**
 	 * 

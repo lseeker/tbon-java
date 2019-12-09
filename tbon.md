@@ -61,7 +61,7 @@ bin | hex | presentation
 0010 0110 | 0x26 | char 3B
 0010 0111 | 0x27 | char 4B
 
-## Java primitive arrays (follows 7bit enc len)
+## Java primitive arrays (must follows 7bit enc len)
 bin | hex | type | element presentation
 --- | --- | ---- | ---
 0010 1000 | 0x28 | boolean[] | true or false
@@ -71,18 +71,18 @@ bin | hex | type | element presentation
 0010 1100 | 0x2c | float | 4BE
 0010 1101 | 0x2d | double | 8BE
 0010 1110 | 0x2e | char[] | 2BE (unsigned)
-0010 1111 | 0x2f | add a depth | 7be count, prepend on array
+0010 1111 | 0x2f | - | not used
 
 ## Variable lengths
 xx present length, all 1 bits is stream mode
+
 bin | hex | presentation
 --- | --- | ----
-0011 0xxx | 0x30+ | BigInteger
-0011 1xxx | 0x38+ | Custom Type
-0100 xxxx | 0x4* | Array
-0101 xxxx | 0x5* | Generic Array
-0110 xxxx | 0x6* | Object
-0111 xxxx | 0x7* | Generic Object
+0011 xxxx | 0x3* | BigInteger
+0100 xxxx | 0x4* | Array  (object)
+0101 xxxx | 0x5* | Object (string, object)
+0110 xxxx | 0x6* | Custom Type
+0111 xxxx | 0x7* | RESERVED
 10xx xxxx | 0x8+ | octet
 11xx xxxx | 0xc+ | string 
 

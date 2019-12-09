@@ -72,17 +72,17 @@ bin | hex | type | element presentation
 0010 1101 | 0x2d | double | 8BE
 0010 1110 | 0x2e | char[] | 2BE (unsigned)
 0010 1111 | 0x2f | - | not used
+0011 xxxx | 0x3* | - | not used (reserved for future)
 
 ## Variable lengths
 xx present length, all 1 bits is stream mode
 
 bin | hex | presentation
 --- | --- | ----
-0011 xxxx | 0x3* | BigInteger
-0100 xxxx | 0x4* | Array  (object)
-0101 xxxx | 0x5* | Object (string, object)
-0110 xxxx | 0x6* | Custom Type
-0111 xxxx | 0x7* | RESERVED
+0100 xxxx | 0x4* | BigInteger
+0101 xxxx | 0x5* | Custom Type
+0110 xxxx | 0x6* | Array
+0111 xxxx | 0x7* | Object (string, object)
 10xx xxxx | 0x8+ | octet
 11xx xxxx | 0xc+ | string 
 

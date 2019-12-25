@@ -37,19 +37,19 @@ bin | hex | type | value
 0001 0110 | 0x16 | uint64 |
 0001 0111 | 0x17 | uint16 | 1B
 
-### null, boolean, float and others
+## float, boolean, null and EOS
 bin | hex | type | value
 --- | --- | -----| -------
-0001 1000 | 0x18 | boolean | false
-0001 1001 | 0x19 | boolean | true
-0001 1010 | 0x1a | float32 |
-0001 1011 | 0x1b | float64 |
-0001 1100 | 0x1c | null | NULL
-0001 1101 | 0x1d | decimal | 0
-0001 1110 | 0x1e | decimal | Scale 6sbv + BI
+0001 1000 | 0x18 | float32 | 0
+0001 1001 | 0x19 | float32 | 4B
+0001 1010 | 0x1a | float64 | 0
+0001 1011 | 0x1b | float64 | 8B
+0001 1100 | 0x1c | boolean | false
+0001 1101 | 0x1d | boolean | true
+0001 1110 | 0x1e | null | NULL
 0001 1111 | 0x1f | EOS | End of Stream Marker
 
-## Time, Date, and Character(uint32)
+## Time, Date, Character(uint32), and decimal 0
 bin | hex | presentation
 --- | --- | ----
 0010 0000 | 0x20 | time
@@ -58,31 +58,31 @@ bin | hex | presentation
 0010 0011 | 0x23 | datetime with timezone
 0010 0100 | 0x24 | char 1B
 0010 0101 | 0x25 | char 2B
-0010 0110 | 0x26 | char 3B
-0010 0111 | 0x27 | char 4B
+0010 0110 | 0x26 | char 7bit encoding
+0010 0111 | 0x27 | decimal 0
 
-## Java primitive arrays (must follows 7bit enc len)
+## Java primitive arrays (must follows 7bit enc len) and variable decimal
 bin | hex | type | element presentation
 --- | --- | ---- | ---
 0010 1000 | 0x28 | boolean[] | true or false
 0010 1001 | 0x29 | short[] | 2BE
 0010 1010 | 0x2a | int[] | signed 7bit encoding
 0010 1011 | 0x2b | long[] | signed 7bit encoding
-0010 1100 | 0x2c | float | 4BE
-0010 1101 | 0x2d | double | 8BE
+0010 1100 | 0x2c | float[] | 4BE
+0010 1101 | 0x2d | double[] | 8BE
 0010 1110 | 0x2e | char[] | 2BE (unsigned)
 0010 1111 | 0x2f | - | not used
-0011 xxxx | 0x3* | - | not used (reserved for future)
 
 ## Variable lengths
 xx present length, all 1 bits is stream mode
 
 bin | hex | presentation
 --- | --- | ----
+0011 xxxx | 0x3* | decimal (xxxx scale sign/continue/2bit/VV + BI)
 0100 xxxx | 0x4* | BigInteger
 0101 xxxx | 0x5* | Custom Type
 0110 xxxx | 0x6* | Array
-0111 xxxx | 0x7* | Object (string, object)
+0111 xxxx | 0x7* | Object (string key, object value)
 10xx xxxx | 0x8+ | octet
 11xx xxxx | 0xc+ | string 
 

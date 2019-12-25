@@ -10,5 +10,5 @@ public interface TypeHandler<T> {
 
 	T read(TBONParser parser);
 
-	void write(TBONGenerator generator, T obj);
+	void write(TBONGenerator generator, Object obj);
 }

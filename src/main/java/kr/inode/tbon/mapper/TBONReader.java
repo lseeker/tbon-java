@@ -303,7 +303,6 @@ public class TBONReader implements AutoCloseable {
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
 
 	}
 

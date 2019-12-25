@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Calendar;
 import java.util.Date;
 
 public interface TBONParser extends Closeable {
@@ -36,6 +37,8 @@ public interface TBONParser extends Closeable {
 	BigDecimal getDecimal();
 
 	Date getDate();
+
+	Calendar getCalendar();
 
 	// java 8
 	// LocalDate getLocalDate();

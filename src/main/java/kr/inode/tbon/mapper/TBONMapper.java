@@ -8,7 +8,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 import kr.inode.tbon.TBONFactory;
-import kr.inode.tbon.TBONGenerator;
 
 public class TBONMapper {
 	private final TBONFactory factory;
@@ -30,7 +29,8 @@ public class TBONMapper {
 	}
 
 	public <T> T readFrom(ReadableByteChannel in) throws IOException {
-		try (TBONReader reader = new TBONReader(factory.createParser(in))) {
+		try (TBONReader reader = new TBONReader(factory.createParser(in),
+				customTypeHandlerRegistry == null ? null : customTypeHandlerRegistry.mapForReader())) {
 			return reader.nextValue();
 		}
 	}
@@ -40,9 +40,9 @@ public class TBONMapper {
 	}
 
 	public void writeTo(WritableByteChannel out, Object obj) throws IOException {
-		try (TBONGenerator generator = factory.createGenerator(out)) {
-
+		try (TBONWriter writer = new TBONWriter(factory.createGenerator(out),
+				customTypeHandlerRegistry == null ? null : customTypeHandlerRegistry.mapForWriter())) {
+			writer.writeObject(obj);
 		}
 	}
-
 }

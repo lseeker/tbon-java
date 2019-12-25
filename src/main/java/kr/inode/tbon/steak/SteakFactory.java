@@ -12,6 +12,7 @@ import kr.inode.tbon.TBONGenerator;
 import kr.inode.tbon.TBONParser;
 
 public class SteakFactory implements TBONFactory {
+	static final byte[] STEAK_HEADER = { (byte) 0xf0, (byte) 0x9f, (byte) 0xa5, (byte) 0xa9, 0x00 };
 
 	@Override
 	public TBONParser createParser(InputStream in) throws IOException {
@@ -24,15 +25,12 @@ public class SteakFactory implements TBONFactory {
 	}
 
 	@Override
-	public TBONGenerator createGenerator(OutputStream out) {
-		// TODO Auto-generated method stub
-		return null;
+	public TBONGenerator createGenerator(OutputStream out) throws IOException {
+		return createGenerator(Channels.newChannel(out));
 	}
 
 	@Override
-	public TBONGenerator createGenerator(WritableByteChannel out) {
-		// TODO Auto-generated method stub
-		return null;
+	public TBONGenerator createGenerator(WritableByteChannel out) throws IOException {
+		return new SteakGenerator(out);
 	}
-
 }

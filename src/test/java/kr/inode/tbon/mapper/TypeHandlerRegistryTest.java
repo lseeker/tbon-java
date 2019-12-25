@@ -32,7 +32,7 @@ public class TypeHandlerRegistryTest {
 		}
 
 		@Override
-		public void write(TBONGenerator generator, CharSequence obj) {
+		public void write(TBONGenerator generator, Object obj) {
 
 		}
 	}
@@ -54,7 +54,7 @@ public class TypeHandlerRegistryTest {
 		}
 
 		@Override
-		public void write(TBONGenerator generator, String obj) {
+		public void write(TBONGenerator generator, Object obj) {
 
 		}
 	}
@@ -95,10 +95,10 @@ public class TypeHandlerRegistryTest {
 		Entry<Class<?>, TypeHandler<?>> entry = it.next();
 
 		Assertions.assertEquals(String.class, entry.getKey());
-		
+
 		entry = it.next();
 		Assertions.assertEquals(CharSequence.class, entry.getKey());
-		
+
 	}
 
 }

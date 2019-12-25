@@ -6,6 +6,8 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 
 import kr.inode.tbon.TBONParser;
@@ -79,7 +81,7 @@ public class SteakParser implements TBONParser {
 						parser.ensureBuffer(4);
 						parser.longValue = parser.buffer.getLong();
 						if (parser.longValue < 0) {
-							// TODO
+							// TODO change to BI
 							// parser.objectValue = BigInteger
 							parser.currentToken = TBONToken.Integer;
 						}
@@ -91,14 +93,42 @@ public class SteakParser implements TBONParser {
 				@Override
 				public void parse(byte b, SteakParser parser) throws IOException {
 					int code = b & 0x07;
-					if (code <= 2) {
+					switch (code) {
+					case 0:
+					case 1:
+					case 2: {
 						int i = parser.readVInt();
 						if (code == 1) {
 							i = -i;
 						}
 						parser.currentToken = TBONToken.Int32;
+						parser.intValue = i;
+						break;
 					}
-					// TODO
+					case 3: {
+						byte s = parser.readByte();
+						parser.currentToken = TBONToken.Int16;
+						parser.shortValue = (short) s;
+						break;
+					}
+					case 4:
+					case 5:
+					case 6: {
+						long l = parser.readVLong();
+						if (code == 5) {
+							l = -l;
+						}
+						parser.currentToken = TBONToken.Int64;
+						parser.longValue = l;
+						break;
+					}
+					case 7: {
+						byte s = parser.readByte();
+						parser.currentToken = TBONToken.Int16;
+						parser.shortValue = (short) (s & 0xff);
+						break;
+					}
+					}
 				}
 			},
 			// 3 null boolean float decimal
@@ -107,15 +137,17 @@ public class SteakParser implements TBONParser {
 				public void parse(byte b, SteakParser parser) throws IOException {
 					switch (b & 0x07) {
 					case 0:
-						parser.currentToken = TBONToken.False;
+						parser.currentToken = TBONToken.Float32;
+						parser.floatValue = 0f;
 						break;
 					case 1:
-						parser.currentToken = TBONToken.True;
-						break;
-					case 2:
 						parser.currentToken = TBONToken.Float32;
 						parser.ensureBuffer(4);
 						parser.floatValue = parser.buffer.getFloat();
+						break;
+					case 2:
+						parser.currentToken = TBONToken.Float64;
+						parser.doubleValue = 0d;
 						break;
 					case 3:
 						parser.currentToken = TBONToken.Float64;
@@ -123,16 +155,13 @@ public class SteakParser implements TBONParser {
 						parser.doubleValue = parser.buffer.getDouble();
 						break;
 					case 4:
-						parser.currentToken = TBONToken.Null;
+						parser.currentToken = TBONToken.False;
 						break;
 					case 5:
-						parser.currentToken = TBONToken.Decimal;
-						parser.objectValue = BigDecimal.ZERO;
+						parser.currentToken = TBONToken.True;
 						break;
 					case 6:
-						parser.currentToken = TBONToken.Decimal;
-						// TODO read decimal
-
+						parser.currentToken = TBONToken.Null;
 						break;
 					case 7:
 						parser.currentToken = TBONToken.EndOfStructure;
@@ -160,8 +189,14 @@ public class SteakParser implements TBONParser {
 						parser.charValue = parser.buffer.getChar();
 						break;
 					case 6:
+						parser.currentToken = TBONToken.Character;
+						int i = parser.readVInt();
+						parser.intValue = i;
+						break;
 					case 7:
-						throw new UnsupportedOperationException("SteakParser: char 3/4 byte not supported");
+						parser.currentToken = TBONToken.Decimal;
+						parser.objectValue = BigDecimal.ZERO;
+						break;
 					}
 				}
 			},
@@ -192,22 +227,24 @@ public class SteakParser implements TBONParser {
 						parser.currentToken = TBONToken.PrimitiveArrayOfChar;
 						break;
 					case 7:
-						throw new IOException("SteakParesr: NOT USED type byte");
+						throw new IOException("SteakParser: NOT USED type byte 0x2f");
 					}
 					parser.elementCount = parser.readVInt();
 				}
 			},
-			// 6 RESERVED
+			// 6 decimal, positive scale
 			new ParserFunc() {
 				@Override
 				public void parse(byte b, SteakParser parser) throws IOException {
+					// TODO decimal parse
 					throw new IOException("SteakParser: unknown type byte " + b);
 				}
 			},
-			// 7 RESERVED
+			// 7 decimal, negative scale
 			new ParserFunc() {
 				@Override
 				public void parse(byte b, SteakParser parser) throws IOException {
+					// TODO decimal parse
 					throw new IOException("SteakParser: unknown type byte " + b);
 				}
 			} };
@@ -231,14 +268,15 @@ public class SteakParser implements TBONParser {
 		this.in = in;
 		buffer.flip();
 		ensureBuffer(5);
-		if (buffer.get() != 0xf0 || buffer.get() != 0x9f || buffer.get() != 0xa5 || buffer.get() != 0xa9
-				|| buffer.get() != 0x00) {
+		byte[] header = new byte[5];
+		buffer.get(header);
+		if (!Arrays.equals(header, SteakFactory.STEAK_HEADER)) {
 			throw new IOException("SteakParser: header not matched");
 		}
 	}
 
 	private void ensureBuffer(int size) throws IOException {
-		if (buffer.remaining() > size) {
+		if (buffer.remaining() >= size) {
 			return;
 		}
 
@@ -349,7 +387,6 @@ public class SteakParser implements TBONParser {
 			}
 		}
 
-		// TODO Auto-generated method stub
 		return true;
 	}
 
@@ -416,6 +453,12 @@ public class SteakParser implements TBONParser {
 	}
 
 	@Override
+	public Calendar getCalendar() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public char getChar() {
 		return charValue;
 	}
@@ -434,5 +477,4 @@ public class SteakParser implements TBONParser {
 	public String getCustomTypeName() {
 		return (String) objectValue;
 	}
-
 }

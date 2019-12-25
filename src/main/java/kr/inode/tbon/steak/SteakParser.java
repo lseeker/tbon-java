@@ -1,5 +1,6 @@
 package kr.inode.tbon.steak;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -295,6 +296,7 @@ public class SteakParser implements TBONParser {
 
 	private int elementCount = -1;
 
+	private boolean inStream = false;
 	private byte byteValue;
 	private short shortValue;
 	private int intValue;
@@ -453,10 +455,12 @@ public class SteakParser implements TBONParser {
 			if (len == 0x3f) {
 				len = readVInt();
 				if (len == 0) {
-					// TODO inf. stream mode
+					inStream = true;
+					return true;
 				}
 			}
 
+			inStream = false;
 			byte[] octet = readOctet(len);
 			if (currentToken == TBONToken.String) {
 				objectValue = new String(octet, StandardCharsets.UTF_8);
@@ -540,12 +544,27 @@ public class SteakParser implements TBONParser {
 	}
 
 	@Override
-	public byte[] getOctet() {
+	public byte[] readOctet() throws IOException {
+		if (inStream) {
+			try (ByteArrayOutputStream out = new ByteArrayOutputStream(1024)) {
+				int len = readVInt();
+				while (len > 0) {
+					out.write(readOctet(len));
+					len = readVInt();
+				}
+
+				inStream = false;
+				return out.toByteArray();
+			}
+		}
 		return (byte[]) objectValue;
 	}
 
 	@Override
-	public String getString() {
+	public String readString() throws IOException {
+		if (inStream) {
+			return new String(readOctet(), StandardCharsets.UTF_8);
+		}
 		return (String) objectValue;
 	}
 

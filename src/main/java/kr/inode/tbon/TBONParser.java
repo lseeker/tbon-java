@@ -48,9 +48,9 @@ public interface TBONParser extends Closeable {
 
 	char getChar();
 
-	byte[] getOctet();
+	byte[] readOctet() throws IOException;
 
-	String getString();
+	String readString() throws IOException;
 
 	/**
 	 * element count of array or object.

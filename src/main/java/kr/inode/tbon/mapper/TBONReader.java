@@ -123,13 +123,13 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.Octet, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				return reader.parser.getOctet();
+				return reader.parser.readOctet();
 			}
 		});
 		READER_FUNCS.put(TBONToken.String, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				return reader.parser.getString();
+				return reader.parser.readString();
 			}
 		});
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfBoolean, new ReaderFunc() {

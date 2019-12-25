@@ -1,6 +1,7 @@
 package kr.inode.tbon.mapper;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Calendar;
@@ -91,10 +92,87 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.write((Calendar) obj);
 			}
 		});
+		WRITER_FUNCS.put(boolean[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(boolean.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getBoolean(obj, i));
+				}
+				writer.generator.writeEndArray();
+			}
+		});
 		WRITER_FUNCS.put(byte[].class, new WriterFunc() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((byte[]) obj);
+			}
+		});
+		WRITER_FUNCS.put(short[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(short.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getShort(obj, i));
+				}
+				writer.generator.writeEndArray();
+			}
+		});
+		WRITER_FUNCS.put(int[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(int.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getInt(obj, i));
+				}
+				writer.generator.writeEndArray();
+			}
+		});
+		WRITER_FUNCS.put(long[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(long.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getLong(obj, i));
+				}
+				writer.generator.writeEndArray();
+			}
+		});
+		WRITER_FUNCS.put(float[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(float.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getFloat(obj, i));
+				}
+				writer.generator.writeEndArray();
+			}
+		});
+		WRITER_FUNCS.put(double[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(double.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getDouble(obj, i));
+				}
+				writer.generator.writeEndArray();
+			}
+		});
+		WRITER_FUNCS.put(char[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				int len = Array.getLength(obj);
+				writer.generator.writeStartPrimitiveArray(char.class, len);
+				for (int i = 0; i < len; ++i) {
+					writer.generator.write(Array.getChar(obj, i));
+				}
+				writer.generator.writeEndArray();
 			}
 		});
 		WRITER_FUNCS.put(String.class, new WriterFunc() {
@@ -145,6 +223,17 @@ public class TBONWriter implements AutoCloseable {
 		final WriterFunc writerFunc = WRITER_FUNCS.get(cls);
 		if (writerFunc != null) {
 			writerFunc.write(this, obj);
+			return;
+		}
+
+		if (cls.isArray()) {
+			int len = Array.getLength(obj);
+			generator.writeStartArray(len);
+			for (int i = 0; i < len; ++i) {
+				writeObject(Array.get(obj, i));
+			}
+			generator.writeEndArray();
+			return;
 		}
 
 		// TODO POJO handling

@@ -44,6 +44,8 @@ public interface TBONGenerator extends Closeable {
 
 	void writeStartArray(int count) throws IOException;
 
+	void writeStartPrimitiveArray(Class<?> type, int count) throws IOException;
+
 	void writeEndArray() throws IOException;
 
 	void writeStartObject() throws IOException;

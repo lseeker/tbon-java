@@ -349,6 +349,32 @@ public class SteakGenerator implements TBONGenerator {
 	}
 
 	@Override
+	public void writeStartPrimitiveArray(Class<?> type, int count) throws IOException {
+		if (!type.isPrimitive()) {
+			throw new IOException(type + " is not primitive");
+		}
+
+		ensureBuffer(1);
+		if (type == int.class) {
+			writeByte(0x2a);
+		} else if (type == double.class) {
+			writeByte(0x2d);
+		} else if (type == long.class) {
+			writeByte(0x2b);
+		} else if (type == float.class) {
+			writeByte(0x2c);
+		} else if (type == short.class) {
+			writeByte(0x29);
+		} else if (type == boolean.class) {
+			writeByte(0x28);
+		} else if (type == char.class) {
+			writeByte(0x2e);
+		} else if (type == byte.class) {
+			throw new IOException("byte array should use write(byte[])");
+		}
+	}
+
+	@Override
 	public void writeEndArray() throws IOException {
 		ensureBuffer(1);
 		writeByte(0x1f);

@@ -61,7 +61,7 @@ bin | hex | presentation
 0010 0110 | 0x26 | char 7bit encoding
 0010 0111 | 0x27 | decimal 0
 
-## Java primitive arrays (must follows 7bit enc len) and variable decimal
+## Java primitive arrays (must follows 7bit enc len)
 bin | hex | type | element presentation
 --- | --- | ---- | ---
 0010 1000 | 0x28 | boolean[] | true or false
@@ -73,12 +73,12 @@ bin | hex | type | element presentation
 0010 1110 | 0x2e | char[] | 2BE (unsigned)
 0010 1111 | 0x2f | - | not used
 
-## Variable lengths
+## Variable length values
 xx present length, all 1 bits is stream mode
 
 bin | hex | presentation
 --- | --- | ----
-0011 xxxx | 0x3* | decimal (xxxx scale sign/continue/2bit/VV + BI)
+0011 xxxx | 0x3* | decimal (xxxx scale sign/continue/VV + BI)
 0100 xxxx | 0x4* | BigInteger
 0101 xxxx | 0x5* | Custom Type
 0110 xxxx | 0x6* | Array

@@ -30,6 +30,21 @@ public class SteakGenerator implements TBONGenerator {
 		buffer.put((byte) b);
 	}
 
+	private void writeVSInt(int i) {
+		int first = 0;
+		if (i < 0) {
+			first |= 0x40;
+			i = -i;
+		}
+		first |= i & 0x3f;
+		if (i > 0x3f) {
+			writeByte(first | 0x80);
+			writeVPInt(i >> 6);
+		} else {
+			writeByte(first);
+		}
+	}
+
 	private void writeVPInt(int i) {
 		while (i > 0x7f) {
 			buffer.put((byte) ((i & 0x7f) | 0x80));
@@ -293,14 +308,25 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(Date value) throws IOException {
-		// TODO Auto-generated method stub
-
+		final Calendar c = Calendar.getInstance();
+		c.setTime(value);
+		write(c);
 	}
 
 	@Override
 	public void write(Calendar value) throws IOException {
-		// TODO Auto-generated method stub
+		int year = value.get(Calendar.YEAR);
+		int dayOfYear = value.get(Calendar.DAY_OF_YEAR);
+		int secondOfDay = value.get(Calendar.HOUR_OF_DAY) * 3600 + value.get(Calendar.MINUTE) * 60
+				+ value.get(Calendar.SECOND);
+		long nanos = value.get(Calendar.MILLISECOND) * 1_000_000L;
 
+		ensureBuffer(26);
+		writeByte(0x22);
+		writeVSInt(year);
+		writeVPInt(dayOfYear);
+		writeVPInt(secondOfDay);
+		writeVPLong(nanos);
 	}
 
 	@Override

@@ -120,6 +120,12 @@ public class TBONReader implements AutoCloseable {
 				return reader.parser.getChar();
 			}
 		});
+		READER_FUNCS.put(TBONToken.Octet, new ReaderFunc() {
+			@Override
+			public Object read(TBONReader reader) throws IOException {
+				return reader.parser.getOctet();
+			}
+		});
 		READER_FUNCS.put(TBONToken.String, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {

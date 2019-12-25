@@ -1,6 +1,10 @@
 package kr.inode.tbon.mapper;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -61,6 +65,42 @@ public class TBONWriter implements AutoCloseable {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Character) obj).charValue());
+			}
+		});
+		WRITER_FUNCS.put(BigInteger.class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((BigInteger) obj);
+			}
+		});
+		WRITER_FUNCS.put(BigDecimal.class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((BigDecimal) obj);
+			}
+		});
+		WRITER_FUNCS.put(Date.class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((Date) obj);
+			}
+		});
+		WRITER_FUNCS.put(Calendar.class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((Calendar) obj);
+			}
+		});
+		WRITER_FUNCS.put(byte[].class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((byte[]) obj);
+			}
+		});
+		WRITER_FUNCS.put(String.class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((String) obj);
 			}
 		});
 	}

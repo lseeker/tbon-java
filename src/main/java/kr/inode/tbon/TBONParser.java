@@ -48,6 +48,8 @@ public interface TBONParser extends Closeable {
 
 	char getChar();
 
+	byte[] getOctet();
+
 	String getString();
 
 	/**

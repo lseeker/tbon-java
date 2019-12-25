@@ -40,23 +40,23 @@ public class SteakParser implements TBONParser {
 					parser.currentToken = INTEGER_TOKENS[b & 0x03];
 					switch (b & 0x07) {
 					case 0: // int8
-						parser.ensureBuffer(1);
+						parser.readToBuffer(1);
 						parser.byteValue = parser.buffer.get();
 						break;
 					case 1: // int16
-						parser.ensureBuffer(2);
+						parser.readToBuffer(2);
 						parser.shortValue = parser.buffer.getShort();
 						break;
 					case 2: // int32
-						parser.ensureBuffer(4);
+						parser.readToBuffer(4);
 						parser.intValue = parser.buffer.getInt();
 						break;
 					case 3: // int64
-						parser.ensureBuffer(8);
+						parser.readToBuffer(8);
 						parser.longValue = parser.buffer.getLong();
 						break;
 					case 4: // uint8
-						parser.ensureBuffer(1);
+						parser.readToBuffer(1);
 						parser.byteValue = parser.buffer.get();
 						if (parser.byteValue < 0) {
 							parser.currentToken = TBONToken.Int16;
@@ -64,21 +64,21 @@ public class SteakParser implements TBONParser {
 						}
 						break;
 					case 5: // uint16
-						parser.ensureBuffer(2);
+						parser.readToBuffer(2);
 						parser.shortValue = parser.buffer.getShort();
 						if (parser.shortValue < 0) {
 							parser.currentToken = TBONToken.Int32;
 							parser.intValue = parser.shortValue & 0xffff;
 						}
 					case 6: // uint32
-						parser.ensureBuffer(4);
+						parser.readToBuffer(4);
 						parser.intValue = parser.buffer.getInt();
 						if (parser.intValue < 0) {
 							parser.currentToken = TBONToken.Int64;
 							parser.longValue = parser.intValue & 0xffffffffL;
 						}
 					case 7: // uint64
-						parser.ensureBuffer(8);
+						parser.readToBuffer(8);
 						parser.longValue = parser.buffer.getLong();
 						if (parser.longValue < 0) {
 							parser.currentToken = TBONToken.Integer;
@@ -145,7 +145,7 @@ public class SteakParser implements TBONParser {
 						break;
 					case 1:
 						parser.currentToken = TBONToken.Float32;
-						parser.ensureBuffer(4);
+						parser.readToBuffer(4);
 						parser.floatValue = parser.buffer.getFloat();
 						break;
 					case 2:
@@ -154,7 +154,7 @@ public class SteakParser implements TBONParser {
 						break;
 					case 3:
 						parser.currentToken = TBONToken.Float64;
-						parser.ensureBuffer(8);
+						parser.readToBuffer(8);
 						parser.doubleValue = parser.buffer.getDouble();
 						break;
 					case 4:
@@ -178,17 +178,35 @@ public class SteakParser implements TBONParser {
 				public void parse(byte b, SteakParser parser) throws IOException {
 					switch (b & 0x07) {
 					case 0: // time
+						throw new UnsupportedOperationException("time");
 					case 1: // date
+						throw new UnsupportedOperationException("date");
 					case 2: // datetime
+						parser.currentToken = TBONToken.DateTime;
+
+						int year = parser.readVSInt();
+						int dayOfYear = parser.readVInt();
+						int secondOfDay = parser.readVInt();
+						long nanos = parser.readVLong();
+
+						Calendar c = Calendar.getInstance();
+						c.clear();
+						c.set(Calendar.YEAR, year);
+						c.set(Calendar.DAY_OF_YEAR, dayOfYear);
+						c.set(Calendar.SECOND, secondOfDay);
+						c.set(Calendar.MILLISECOND, (int) (nanos / 1_000_000L));
+						parser.objectValue = c;
+						break;
 					case 3: // datetimetz
+						throw new UnsupportedOperationException("datetimetz");
 					case 4:
 						parser.currentToken = TBONToken.Character;
-						parser.ensureBuffer(1);
+						parser.readToBuffer(1);
 						parser.charValue = (char) (parser.buffer.get() & 0xff);
 						break;
 					case 5:
 						parser.currentToken = TBONToken.Character;
-						parser.ensureBuffer(2);
+						parser.readToBuffer(2);
 						parser.charValue = parser.buffer.getChar();
 						break;
 					case 6:
@@ -239,16 +257,35 @@ public class SteakParser implements TBONParser {
 			new ParserFunc() {
 				@Override
 				public void parse(byte b, SteakParser parser) throws IOException {
-					// TODO decimal parse
-					throw new IOException("SteakParser: unknown type byte " + b);
+					int scale = b & 0x7;
+					if (scale == 7) {
+						scale = parser.readVInt();
+					}
+					int biLen = parser.readVInt();
+					byte[] bi = new byte[biLen];
+					parser.readToBuffer(biLen);
+					parser.buffer.get(bi);
+
+					parser.currentToken = TBONToken.Decimal;
+					parser.objectValue = new BigDecimal(new BigInteger(bi), scale);
 				}
 			},
 			// 7 decimal, negative scale
 			new ParserFunc() {
 				@Override
 				public void parse(byte b, SteakParser parser) throws IOException {
-					// TODO decimal parse
-					throw new IOException("SteakParser: unknown type byte " + b);
+					int scale = b & 0x7;
+					if (scale == 0) {
+						scale = parser.readVInt();
+					}
+					scale = -scale;
+					int biLen = parser.readVInt();
+					byte[] bi = new byte[biLen];
+					parser.readToBuffer(biLen);
+					parser.buffer.get(bi);
+
+					parser.currentToken = TBONToken.Decimal;
+					parser.objectValue = new BigDecimal(new BigInteger(bi), scale);
 				}
 			} };
 
@@ -270,7 +307,7 @@ public class SteakParser implements TBONParser {
 	public SteakParser(ReadableByteChannel in) throws IOException {
 		this.in = in;
 		buffer.flip();
-		ensureBuffer(5);
+		readToBuffer(5);
 		byte[] header = new byte[5];
 		buffer.get(header);
 		if (!Arrays.equals(header, SteakFactory.STEAK_HEADER)) {
@@ -278,13 +315,13 @@ public class SteakParser implements TBONParser {
 		}
 	}
 
-	private void ensureBuffer(int size) throws IOException {
+	private void readToBuffer(int size) throws IOException {
 		if (buffer.remaining() >= size) {
 			return;
 		}
 
+		int read = buffer.remaining();
 		buffer.compact();
-		int read = 0;
 		while (read < size) {
 			int r = in.read(buffer);
 			if (r == -1) {
@@ -300,8 +337,40 @@ public class SteakParser implements TBONParser {
 	}
 
 	private byte readByte() throws IOException {
-		ensureBuffer(1);
+		readToBuffer(1);
 		return buffer.get();
+	}
+
+	private byte[] readOctet(int len) throws IOException {
+		byte[] b = new byte[len];
+		if (len <= buffer.capacity()) {
+			readToBuffer(len);
+			buffer.get(b);
+		} else {
+			int index = 0;
+			while (index < b.length) {
+				int target = Math.min(buffer.capacity(), b.length - index);
+				buffer.get(b, index, target);
+				index += target;
+			}
+		}
+		return b;
+	}
+
+	private int readVSInt() throws IOException {
+		byte r = readByte();
+		boolean neg = (r & 0x40) == 0x40;
+		int i = r & 0x3f;
+		int shift = 6;
+		while (r < 0) {
+			r = readByte();
+			i |= (r & 0x7f) << shift;
+			shift += 7;
+		}
+		if (neg) {
+			i = -i;
+		}
+		return i;
 	}
 
 	private int readVInt() throws IOException {
@@ -330,7 +399,7 @@ public class SteakParser implements TBONParser {
 
 	@Override
 	public boolean next() throws IOException {
-		ensureBuffer(1);
+		readToBuffer(1);
 
 		byte b = buffer.get();
 		if ((b & 0xc0) == 0) {
@@ -350,7 +419,7 @@ public class SteakParser implements TBONParser {
 				if (len == 0) {
 					objectValue = BigInteger.ZERO;
 				} else {
-					ensureBuffer(len);
+					readToBuffer(len);
 					byte[] buf = new byte[len];
 					buffer.get(buf);
 					objectValue = new BigInteger(buf);
@@ -358,7 +427,7 @@ public class SteakParser implements TBONParser {
 				break;
 			case 1: // CustomType
 				currentToken = TBONToken.CustomType;
-				ensureBuffer(len);
+				readToBuffer(len);
 				byte[] buf = new byte[len];
 				buffer.get(buf);
 				objectValue = new String(buf, StandardCharsets.UTF_8);
@@ -374,6 +443,12 @@ public class SteakParser implements TBONParser {
 			}
 		} else {
 			// octet or string
+			if ((b & 0x40) == 0) {
+				currentToken = TBONToken.Octet;
+			} else {
+				currentToken = TBONToken.String;
+			}
+
 			int len = b & 0x3f;
 			if (len == 0x3f) {
 				len = readVInt();
@@ -382,10 +457,11 @@ public class SteakParser implements TBONParser {
 				}
 			}
 
-			if ((b & 0x40) == 0) {
-				currentToken = TBONToken.Octet;
+			byte[] octet = readOctet(len);
+			if (currentToken == TBONToken.String) {
+				objectValue = new String(octet, StandardCharsets.UTF_8);
 			} else {
-				currentToken = TBONToken.String;
+				objectValue = octet;
 			}
 		}
 
@@ -450,19 +526,22 @@ public class SteakParser implements TBONParser {
 
 	@Override
 	public Date getDate() {
-		// TODO Auto-generated method stub
-		return null;
+		return getCalendar().getTime();
 	}
 
 	@Override
 	public Calendar getCalendar() {
-		// TODO Auto-generated method stub
-		return null;
+		return (Calendar) objectValue;
 	}
 
 	@Override
 	public char getChar() {
 		return charValue;
+	}
+
+	@Override
+	public byte[] getOctet() {
+		return (byte[]) objectValue;
 	}
 
 	@Override

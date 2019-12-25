@@ -78,13 +78,13 @@ xx present length, all 1 bits is stream mode
 
 bin | hex | presentation
 --- | --- | ----
-0011 xxxx | 0x3* | decimal (xxxx scale sign/continue/VV + BI)
-0100 xxxx | 0x4* | BigInteger
-0101 xxxx | 0x5* | Custom Type
-0110 xxxx | 0x6* | Array
-0111 xxxx | 0x7* | Object (string key, object value)
-10xx xxxx | 0x8+ | octet
-11xx xxxx | 0xc+ | string 
+0011 xxxx | 0x3* | decimal (xxxx scale sign 1bit value 3bit(7 stream) + BI)
+0100 xxxx | 0x4* | BigInteger (xxxx 0-14 len, 15 stream)
+0101 xxxx | 0x5* | Custom Type (xxxx 1-15 len, 0 stream)
+0110 xxxx | 0x6* | Array (xxxx 0-14 len, 15 stream)
+0111 xxxx | 0x7* | Object (string key, object value) (xxxx 0-14 len, 15 stream)
+10xx xxxx | 0x8+ | octet (xx xxxx 0-62 len, 63 stream)
+11xx xxxx | 0xc+ | string(xx xxxx 0-62 len, 63 stream) 
 
 # Specs
 

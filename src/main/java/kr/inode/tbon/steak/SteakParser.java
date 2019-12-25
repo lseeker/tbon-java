@@ -59,31 +59,34 @@ public class SteakParser implements TBONParser {
 						parser.ensureBuffer(1);
 						parser.byteValue = parser.buffer.get();
 						if (parser.byteValue < 0) {
-							parser.shortValue = (short) (parser.byteValue & 0xff);
 							parser.currentToken = TBONToken.Int16;
+							parser.shortValue = (short) (parser.byteValue & 0xff);
 						}
 						break;
 					case 5: // uint16
 						parser.ensureBuffer(2);
 						parser.shortValue = parser.buffer.getShort();
 						if (parser.shortValue < 0) {
-							parser.intValue = parser.shortValue & 0xffff;
 							parser.currentToken = TBONToken.Int32;
+							parser.intValue = parser.shortValue & 0xffff;
 						}
 					case 6: // uint32
 						parser.ensureBuffer(4);
 						parser.intValue = parser.buffer.getInt();
 						if (parser.intValue < 0) {
-							parser.longValue = parser.intValue & 0xffffffffL;
 							parser.currentToken = TBONToken.Int64;
+							parser.longValue = parser.intValue & 0xffffffffL;
 						}
 					case 7: // uint64
-						parser.ensureBuffer(4);
+						parser.ensureBuffer(8);
 						parser.longValue = parser.buffer.getLong();
 						if (parser.longValue < 0) {
-							// TODO change to BI
-							// parser.objectValue = BigInteger
 							parser.currentToken = TBONToken.Integer;
+							byte[] bi = new byte[9];
+							ByteBuffer bb = ByteBuffer.wrap(bi);
+							bb.put((byte) 0);
+							bb.putLong(parser.longValue);
+							parser.objectValue = new BigInteger(bi);
 						}
 					}
 				}
@@ -381,7 +384,6 @@ public class SteakParser implements TBONParser {
 
 			if ((b & 0x40) == 0) {
 				currentToken = TBONToken.Octet;
-
 			} else {
 				currentToken = TBONToken.String;
 			}

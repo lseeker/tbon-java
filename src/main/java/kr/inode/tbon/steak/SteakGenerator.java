@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -45,11 +46,24 @@ public class SteakGenerator implements TBONGenerator {
 		buffer.put((byte) l);
 	}
 
+	private void writeOctet(byte[] b) throws IOException {
+		if (buffer.remaining() < b.length) {
+			flush();
+			flushBuffer(ByteBuffer.wrap(b));
+		} else {
+			buffer.put(b);
+		}
+	}
+
+	private void flushBuffer(ByteBuffer b) throws IOException {
+		while (b.hasRemaining()) {
+			out.write(b);
+		}
+	}
+
 	private void flush() throws IOException {
 		buffer.flip();
-		while (buffer.hasRemaining()) {
-			out.write(buffer);
-		}
+		flushBuffer(buffer);
 		buffer.clear();
 	}
 
@@ -173,32 +187,108 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(char value) throws IOException {
-		// TODO Auto-generated method stub
+		if (value <= 0xff) {
+			ensureBuffer(2);
+			writeByte(0x24);
+			writeByte(value);
+		} else {
+			ensureBuffer(3);
+			writeByte(0x25);
+			buffer.putChar(value);
+		}
+	}
 
+	@Override
+	public void writeChar(int value) throws IOException {
+		if (!Character.isValidCodePoint(value)) {
+			throw new IOException("SteakGenerator: invalid unicode code point " + value);
+		}
+		if (value < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+			write((char) value);
+		} else {
+			ensureBuffer(6);
+			writeByte(0x26);
+			writeVPInt(value);
+		}
 	}
 
 	@Override
 	public void write(BigInteger value) throws IOException {
-		// TODO Auto-generated method stub
-
+		if (BigInteger.ZERO.equals(value)) {
+			ensureBuffer(1);
+			writeByte(0x40);
+		} else {
+			byte[] b = value.toByteArray();
+			if (b.length < 15) {
+				ensureBuffer(1 + b.length);
+				writeByte(0x40 + b.length);
+			} else {
+				ensureBuffer(5 + b.length);
+				writeByte(0x4f);
+				writeVPInt(b.length);
+			}
+			writeOctet(b);
+		}
 	}
 
 	@Override
 	public void write(BigDecimal value) throws IOException {
-		// TODO Auto-generated method stub
+		if (BigDecimal.ZERO.equals(value)) {
+			ensureBuffer(1);
+			writeByte(0x27);
+		} else {
+			int scale = value.scale();
+			byte[] unscaled = value.unscaledValue().toByteArray();
 
+			ensureBuffer(11 + unscaled.length);
+
+			// write scale
+			if (scale >= 0) {
+				if (scale < 7) {
+					writeByte(0x30 + scale);
+				} else {
+					writeByte(0x37);
+					writeVPInt(scale);
+				}
+			} else {
+				scale = -scale;
+				if (scale < 8) {
+					writeByte(0x38 + scale);
+				} else {
+					writeByte(0x38);
+					writeVPInt(scale);
+				}
+			}
+
+			// write big integer
+			writeVPInt(unscaled.length);
+			writeOctet(unscaled);
+		}
 	}
 
 	@Override
 	public void write(byte[] value) throws IOException {
-		// TODO Auto-generated method stub
-
+		ensureBuffer(6 + value.length);
+		if (value.length < 63) {
+			writeByte(0x80 + value.length);
+		} else {
+			writeByte(0xbf);
+			writeVPInt(value.length);
+		}
+		writeOctet(value);
 	}
 
 	@Override
 	public void write(String value) throws IOException {
-		// TODO Auto-generated method stub
-
+		byte[] b = value.getBytes(StandardCharsets.UTF_8);
+		ensureBuffer(6 + b.length);
+		if (b.length < 63) {
+			writeByte(0xc0 + b.length);
+		} else {
+			writeByte(0xff);
+			writeVPInt(b.length);
+		}
+		writeOctet(b);
 	}
 
 	@Override
@@ -215,44 +305,69 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void writeStartArray() throws IOException {
-		// TODO Auto-generated method stub
-
+		ensureBuffer(2);
+		writeByte(0x6f);
+		writeByte(0);
 	}
 
 	@Override
 	public void writeStartArray(int count) throws IOException {
-		// TODO Auto-generated method stub
-
+		if (count < 15) {
+			ensureBuffer(1);
+			writeByte(0x60 + count);
+		} else {
+			ensureBuffer(6);
+			writeByte(0x6f);
+			writeVPInt(count);
+		}
 	}
 
 	@Override
 	public void writeEndArray() throws IOException {
-		// TODO Auto-generated method stub
-
+		ensureBuffer(1);
+		writeByte(0x1f);
 	}
 
 	@Override
 	public void writeStartObject() throws IOException {
-		// TODO Auto-generated method stub
-
+		ensureBuffer(2);
+		writeByte(0x7f);
+		writeByte(0);
 	}
 
 	@Override
 	public void writeStartObject(int count) throws IOException {
-		// TODO Auto-generated method stub
-
+		if (count < 15) {
+			ensureBuffer(1);
+			writeByte(0x70 + count);
+		} else {
+			ensureBuffer(6);
+			writeByte(0x7f);
+			writeVPInt(count);
+		}
 	}
 
 	@Override
 	public void writeEndObject() throws IOException {
-		// TODO Auto-generated method stub
-
+		ensureBuffer(1);
+		writeByte(0x1f);
 	}
 
 	@Override
 	public void writeCustomType(String typeName) throws IOException {
-		// TODO Auto-generated method stub
-
+		if (typeName.isEmpty()) {
+			throw new IOException("SteakGenerator: custom type name should not empty");
+		}
+		byte[] b = typeName.getBytes(StandardCharsets.UTF_8);
+		if (b.length < 16) {
+			ensureBuffer(1 + b.length);
+			writeByte(0x50 + b.length);
+		} else {
+			ensureBuffer(6 + b.length);
+			writeByte(0x50);
+			writeVPInt(b.length);
+		}
+		writeOctet(b);
 	}
 
 }

@@ -26,6 +26,8 @@ public interface TBONGenerator extends Closeable {
 
 	void write(char value) throws IOException;
 
+	void writeChar(int value) throws IOException;
+
 	void write(BigInteger value) throws IOException;
 
 	void write(BigDecimal value) throws IOException;

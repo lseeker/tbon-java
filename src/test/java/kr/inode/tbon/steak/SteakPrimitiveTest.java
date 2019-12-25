@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import kr.inode.tbon.mapper.TBONMapper;
 
-public class SteakTest {
+public class SteakPrimitiveTest {
 	@Test
 	public void testNull() throws IOException {
 		TBONMapper mapper = new TBONMapper(new SteakFactory());
@@ -293,6 +293,26 @@ public class SteakTest {
 			try (ByteArrayInputStream in = new ByteArrayInputStream(array, 76, 14)) {
 				Double value = mapper.readFrom(in);
 				Assertions.assertEquals(Double.NEGATIVE_INFINITY, value);
+			}
+		}
+	}
+
+	@Test
+	public void testChar() throws IOException {
+		TBONMapper mapper = new TBONMapper(new SteakFactory());
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			mapper.writeTo(out, 'a');
+			mapper.writeTo(out, '가');
+
+			byte[] array = out.toByteArray();
+			try (ByteArrayInputStream in = new ByteArrayInputStream(array, 0, 7)) {
+				Character value = mapper.readFrom(in);
+				Assertions.assertEquals('a', value);
+			}
+
+			try (ByteArrayInputStream in = new ByteArrayInputStream(array, 7, 8)) {
+				Character value = mapper.readFrom(in);
+				Assertions.assertEquals('가', value);
 			}
 		}
 	}

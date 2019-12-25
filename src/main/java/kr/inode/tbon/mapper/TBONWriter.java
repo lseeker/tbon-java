@@ -57,6 +57,12 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.write(((Double) obj).doubleValue());
 			}
 		});
+		WRITER_FUNCS.put(Character.class, new WriterFunc() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write(((Character) obj).charValue());
+			}
+		});
 	}
 
 	private final TBONGenerator generator;

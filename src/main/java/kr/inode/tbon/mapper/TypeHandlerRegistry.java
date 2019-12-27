@@ -1,11 +1,20 @@
 package kr.inode.tbon.mapper;
 
+import java.util.Collection;
 import java.util.Map;
 
 public interface TypeHandlerRegistry {
-	void register(TypeHandler<?>... customTypeHandlers);
+	void register(TypeHandler... typeHandlers);
 
-	Map<Class<?>, TypeHandler<?>> mapForWriter();
+	void register(MultiTypeReader... multiTypeReaders);
 
-	Map<String, TypeHandler<?>> mapForReader();
+	void register(MultiTypeWriter... multiTypeWriters);
+
+	Map<String, TypeHandler> handlerMapForReader();
+
+	Map<Class<?>, TypeHandler> handlerMapForWriter();
+
+	Collection<MultiTypeReader> multiTypeReaders();
+
+	Collection<MultiTypeWriter> multiTypeWriters();
 }

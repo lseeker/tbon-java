@@ -1,14 +1,7 @@
 package kr.inode.tbon.mapper;
 
-import kr.inode.tbon.TBONGenerator;
-import kr.inode.tbon.TBONParser;
-
-public interface TypeHandler<T> {
+public interface TypeHandler extends TypeReader, TypeWriter {
 	String typeName();
 
-	Class<T> typeClass();
-
-	T read(TBONParser parser);
-
-	void write(TBONGenerator generator, Object obj);
+	Class<?> typeClass();
 }

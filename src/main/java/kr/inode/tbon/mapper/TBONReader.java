@@ -2,8 +2,9 @@ package kr.inode.tbon.mapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -251,7 +252,7 @@ public class TBONReader implements AutoCloseable {
 			public Object read(TBONReader reader) throws IOException {
 				TBONParser parser = reader.parser;
 				int len = parser.getElementCount();
-				Map<String, Object> map = new HashMap<>(len == -1 ? 16 : len * 2);
+				Map<String, Object> map = new LinkedHashMap<>(len == -1 ? 16 : len * 2);
 				while (parser.next()) {
 					if (parser.currentToken() == TBONToken.EndOfStructure) {
 						break;
@@ -267,11 +268,23 @@ public class TBONReader implements AutoCloseable {
 			public Object read(TBONReader reader) throws IOException {
 				TBONParser parser = reader.parser;
 				String customTypeName = parser.getCustomTypeName();
-				TypeHandler<?> typeHandler = reader.typeHandlers.get(customTypeName);
-				if (typeHandler == null) {
-					throw new IOException("TBONReader: Custom type handler not found for " + customTypeName);
+				if (reader.typeHandlerMap != null) {
+					TypeReader typeReader = reader.typeHandlerMap.get(customTypeName);
+					if (typeReader != null) {
+						return typeReader.read(customTypeName, reader);
+					}
 				}
-				return typeHandler.read(parser);
+
+				if (reader.multiTypeReaders != null) {
+					for (MultiTypeReader typeReader : reader.multiTypeReaders) {
+						if (typeReader.canRead(customTypeName)) {
+							return typeReader.read(customTypeName, reader);
+						}
+					}
+				}
+
+				// TODO POJO handling
+				throw new IOException("TBONReader: Custom type reader not found for " + customTypeName);
 			}
 		});
 		READER_FUNCS.put(TBONToken.EndOfStructure, new ReaderFunc() {
@@ -283,15 +296,22 @@ public class TBONReader implements AutoCloseable {
 	}
 
 	private final TBONParser parser;
-	private final Map<String, TypeHandler<?>> typeHandlers;
+	private final Map<String, TypeHandler> typeHandlerMap;
+	private final Collection<MultiTypeReader> multiTypeReaders;
 
 	public TBONReader(TBONParser parser) {
-		this(parser, null);
+		this(parser, null, null);
 	}
 
-	public TBONReader(TBONParser parser, Map<String, TypeHandler<?>> typeHandlers) {
+	public TBONReader(TBONParser parser, Map<String, TypeHandler> typeHandlerMap,
+			Collection<MultiTypeReader> multiTypeReaders) {
 		this.parser = parser;
-		this.typeHandlers = typeHandlers;
+		this.typeHandlerMap = typeHandlerMap;
+		this.multiTypeReaders = multiTypeReaders;
+	}
+
+	public TBONParser parser() {
+		return parser;
 	}
 
 	public <T> T nextValue() throws IOException {
@@ -308,8 +328,8 @@ public class TBONReader implements AutoCloseable {
 	}
 
 	@Override
-	public void close() {
-
+	public void close() throws IOException {
+		parser.close();
 	}
 
 }

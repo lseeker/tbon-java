@@ -1,5 +1,8 @@
 package kr.inode.tbon.mapper;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -10,32 +13,49 @@ import java.util.Map;
 import java.util.Objects;
 
 class TypeHandlerRegistryImpl implements TypeHandlerRegistry {
-	private Map<String, TypeHandler<?>> mapForReader = new HashMap<>();
-	private Map<Class<?>, TypeHandler<?>> mapForWriter = Collections.emptyMap();
+	private Map<String, TypeHandler> mapForReader = new HashMap<>();
+	private Map<Class<?>, TypeHandler> mapForWriter = Collections.emptyMap();
+	private List<MultiTypeReader> multiTypeReaders = new ArrayList<>();
+	private List<MultiTypeWriter> multiTypeWriters = new ArrayList<>();
 	private boolean needUpdateMapForWriter = false;
 
 	@Override
-	public void register(TypeHandler<?>... typeHandlers) {
+	public void register(TypeHandler... typeHandlers) {
 		Objects.requireNonNull(typeHandlers, "typeHandlers should not null");
 
-		for (TypeHandler<?> typeHandler : typeHandlers) {
+		for (TypeHandler typeHandler : typeHandlers) {
 			mapForReader.put(typeHandler.typeName(), typeHandler);
 			needUpdateMapForWriter = true;
 		}
 	}
 
 	@Override
-	public Map<Class<?>, TypeHandler<?>> mapForWriter() {
+	public void register(MultiTypeReader... multiTypeReaders) {
+		this.multiTypeReaders.addAll(Arrays.asList(multiTypeReaders));
+	}
+
+	@Override
+	public void register(MultiTypeWriter... multiTypeWriters) {
+		this.multiTypeWriters.addAll(Arrays.asList(multiTypeWriters));
+	}
+
+	@Override
+	public Map<String, TypeHandler> handlerMapForReader() {
+		return mapForReader;
+	}
+
+	@Override
+	public Map<Class<?>, TypeHandler> handlerMapForWriter() {
 		if (needUpdateMapForWriter) {
 			// create new writer map
-			List<TypeHandler<?>> ordered = new LinkedList<>();
+			List<TypeHandler> ordered = new LinkedList<>();
 
-			for (TypeHandler<?> typeHandler : mapForReader.values()) {
-				ListIterator<TypeHandler<?>> it = ordered.listIterator();
+			for (TypeHandler typeHandler : mapForReader.values()) {
+				ListIterator<TypeHandler> it = ordered.listIterator();
 
 				boolean added = false;
 				while (it.hasNext()) {
-					TypeHandler<?> possibleParent = it.next();
+					TypeHandler possibleParent = it.next();
 					if (possibleParent.typeClass().isAssignableFrom(typeHandler.typeClass())) {
 						it.previous();
 						it.add(typeHandler);
@@ -48,8 +68,8 @@ class TypeHandlerRegistryImpl implements TypeHandlerRegistry {
 				}
 			}
 
-			Map<Class<?>, TypeHandler<?>> newMap = new LinkedHashMap<>(mapForReader.size());
-			for (TypeHandler<?> typeHandler : ordered) {
+			Map<Class<?>, TypeHandler> newMap = new LinkedHashMap<>(mapForReader.size());
+			for (TypeHandler typeHandler : ordered) {
 				newMap.put(typeHandler.typeClass(), typeHandler);
 			}
 			mapForWriter = newMap;
@@ -58,7 +78,13 @@ class TypeHandlerRegistryImpl implements TypeHandlerRegistry {
 	}
 
 	@Override
-	public Map<String, TypeHandler<?>> mapForReader() {
-		return mapForReader;
+	public Collection<MultiTypeReader> multiTypeReaders() {
+		return multiTypeReaders;
 	}
+
+	@Override
+	public Collection<MultiTypeWriter> multiTypeWriters() {
+		return multiTypeWriters;
+	}
+
 }

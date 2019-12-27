@@ -2,8 +2,11 @@ package kr.inode.tbon;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -33,6 +36,12 @@ public interface TBONGenerator extends Closeable {
 	void write(BigDecimal value) throws IOException;
 
 	void write(byte[] value) throws IOException;
+
+	void write(ByteBuffer value) throws IOException;
+
+	void write(InputStream value) throws IOException;
+
+	void write(ReadableByteChannel value) throws IOException;
 
 	void write(String value) throws IOException;
 

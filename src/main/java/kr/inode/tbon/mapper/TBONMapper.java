@@ -8,20 +8,22 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 import kr.inode.tbon.TBONFactory;
+import kr.inode.tbon.steak.SteakFactory;
 
 public class TBONMapper {
 	private final TBONFactory factory;
-	private TypeHandlerRegistry customTypeHandlerRegistry;
+	private TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistryImpl();
+
+	public TBONMapper() {
+		this(new SteakFactory());
+	}
 
 	public TBONMapper(TBONFactory factory) {
 		this.factory = factory;
 	}
 
-	public TypeHandlerRegistry customTypeHandlerRegistry() {
-		if (customTypeHandlerRegistry == null) {
-			customTypeHandlerRegistry = new TypeHandlerRegistryImpl();
-		}
-		return customTypeHandlerRegistry;
+	public TypeHandlerRegistry typeHandlerRegistry() {
+		return typeHandlerRegistry;
 	}
 
 	public <T> T readFrom(InputStream in) throws IOException {
@@ -29,8 +31,8 @@ public class TBONMapper {
 	}
 
 	public <T> T readFrom(ReadableByteChannel in) throws IOException {
-		try (TBONReader reader = new TBONReader(factory.createParser(in),
-				customTypeHandlerRegistry == null ? null : customTypeHandlerRegistry.mapForReader())) {
+		try (TBONReader reader = new TBONReader(factory.createParser(in), typeHandlerRegistry.handlerMapForReader(),
+				typeHandlerRegistry.multiTypeReaders())) {
 			return reader.nextValue();
 		}
 	}
@@ -40,8 +42,8 @@ public class TBONMapper {
 	}
 
 	public void writeTo(WritableByteChannel out, Object obj) throws IOException {
-		try (TBONWriter writer = new TBONWriter(factory.createGenerator(out),
-				customTypeHandlerRegistry == null ? null : customTypeHandlerRegistry.mapForWriter())) {
+		try (TBONWriter writer = new TBONWriter(factory.createGenerator(out), typeHandlerRegistry.handlerMapForWriter(),
+				typeHandlerRegistry.multiTypeWriters())) {
 			writer.writeObject(obj);
 		}
 	}

@@ -1,9 +1,12 @@
 package kr.inode.tbon.steak;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
@@ -17,7 +20,7 @@ public class SteakGenerator implements TBONGenerator {
 
 	public SteakGenerator(final WritableByteChannel out) throws IOException {
 		this.out = out;
-		out.write(ByteBuffer.wrap(SteakFactory.STEAK_HEADER));
+		buffer.put(SteakFactory.STEAK_HEADER);
 	}
 
 	private void ensureBuffer(int size) throws IOException {
@@ -65,6 +68,15 @@ public class SteakGenerator implements TBONGenerator {
 		if (buffer.remaining() < b.length) {
 			flush();
 			flushBuffer(ByteBuffer.wrap(b));
+		} else {
+			buffer.put(b);
+		}
+	}
+
+	private void writeOctet(ByteBuffer b) throws IOException {
+		if (buffer.remaining() < b.remaining()) {
+			flush();
+			flushBuffer(b);
 		} else {
 			buffer.put(b);
 		}
@@ -283,14 +295,45 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(byte[] value) throws IOException {
-		ensureBuffer(6 + value.length);
-		if (value.length < 63) {
-			writeByte(0x80 + value.length);
+		write(ByteBuffer.wrap(value));
+	}
+
+	@Override
+	public void write(ByteBuffer value) throws IOException {
+		int len = value.remaining();
+		if (len < 63) {
+			ensureBuffer(1 + len);
+			writeByte(0x80 + len);
 		} else {
+			ensureBuffer(6 + len);
 			writeByte(0xbf);
-			writeVPInt(value.length);
+			writeVPInt(len);
 		}
 		writeOctet(value);
+	}
+
+	@Override
+	public void write(InputStream value) throws IOException {
+		write(Channels.newChannel(value));
+	}
+
+	@Override
+	public void write(ReadableByteChannel value) throws IOException {
+		ensureBuffer(3);
+		writeByte(0x8bf);
+		writeByte(0);
+
+		ByteBuffer transferBuffer = ByteBuffer.allocate(4096);
+		for (;;) {
+			int read = value.read(transferBuffer);
+			if (read == -1) {
+				break;
+			}
+			ensureBuffer(5 + read);
+			writeVPInt(read);
+			flushBuffer(transferBuffer);
+		}
+		writeByte(0);
 	}
 
 	@Override

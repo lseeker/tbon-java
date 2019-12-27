@@ -292,7 +292,7 @@ public class SteakParser implements TBONParser {
 
 	private final ReadableByteChannel in;
 	private TBONToken currentToken = TBONToken.NotAvailable;
-	private final ByteBuffer buffer = ByteBuffer.allocate(4096);
+	private final ByteBuffer buffer = ByteBuffer.allocate(8192);
 
 	private int elementCount = -1;
 

@@ -1,21 +1,14 @@
 package kr.inode.tbon.mapper;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import kr.inode.tbon.TBONFactory;
-import kr.inode.tbon.TBONGenerator;
-import kr.inode.tbon.TBONParser;
-
 public class TypeHandlerRegistryTest {
-	private static class CharSequenceHandler implements TypeHandler<CharSequence> {
+	private static class CharSequenceHandler implements TypeHandler {
 		@Override
 		public String typeName() {
 			return "CS";
@@ -27,17 +20,17 @@ public class TypeHandlerRegistryTest {
 		}
 
 		@Override
-		public CharSequence read(TBONParser parser) {
+		public <T> T read(String typeName, TBONReader reader) throws IOException {
 			return null;
 		}
 
 		@Override
-		public void write(TBONGenerator generator, Object obj) {
+		public void write(TBONWriter writer, Object obj) throws IOException {
 
 		}
 	}
 
-	private static class StringHandler implements TypeHandler<String> {
+	private static class StringHandler implements TypeHandler {
 		@Override
 		public String typeName() {
 			return "STR";
@@ -49,56 +42,29 @@ public class TypeHandlerRegistryTest {
 		}
 
 		@Override
-		public String read(TBONParser parser) {
+		public <T> T read(String typeName, TBONReader reader) throws IOException {
 			return null;
 		}
 
 		@Override
-		public void write(TBONGenerator generator, Object obj) {
-
+		public void write(TBONWriter writer, Object obj) throws IOException {
 		}
 	}
 
 	@Test
 	public void testWriterOrder() {
-		TBONMapper mapper = new TBONMapper(new TBONFactory() {
+		TBONMapper mapper = new TBONMapper();
 
-			@Override
-			public TBONParser createParser(ReadableByteChannel in) {
-				// TODO Auto-generated method stub
-				return null;
-			}
+		mapper.typeHandlerRegistry().register(new CharSequenceHandler(), new StringHandler());
 
-			@Override
-			public TBONParser createParser(InputStream in) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public TBONGenerator createGenerator(WritableByteChannel out) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public TBONGenerator createGenerator(OutputStream out) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		});
-
-		mapper.customTypeHandlerRegistry().register(new CharSequenceHandler(), new StringHandler());
-
-		Iterator<Entry<Class<?>, TypeHandler<?>>> it = mapper.customTypeHandlerRegistry().mapForWriter().entrySet()
+		Iterator<Entry<Class<?>, TypeHandler>> it = mapper.typeHandlerRegistry().handlerMapForWriter().entrySet()
 				.iterator();
-		Entry<Class<?>, TypeHandler<?>> entry = it.next();
+		Entry<Class<?>, TypeHandler> entry = it.next();
 
 		Assertions.assertEquals(String.class, entry.getKey());
 
 		entry = it.next();
 		Assertions.assertEquals(CharSequence.class, entry.getKey());
-
 	}
 
 }

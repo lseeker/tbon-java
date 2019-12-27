@@ -456,11 +456,11 @@ public class SteakGenerator implements TBONGenerator {
 		byte[] b = typeName.getBytes(StandardCharsets.UTF_8);
 		if (b.length < 16) {
 			ensureBuffer(1 + b.length);
-			writeByte(0x50 + b.length);
+			writeByte(0x50 + b.length - 1);
 		} else {
 			ensureBuffer(6 + b.length);
-			writeByte(0x50);
-			writeVPInt(b.length);
+			writeByte(0x5f);
+			writeVPInt(b.length - 1);
 		}
 		writeOctet(b);
 	}

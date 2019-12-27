@@ -1,12 +1,17 @@
 package kr.inode.tbon.mapper;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import kr.inode.tbon.TBONParser;
 import kr.inode.tbon.TBONToken;
@@ -283,8 +288,50 @@ public class TBONReader implements AutoCloseable {
 					}
 				}
 
-				// TODO POJO handling
-				throw new IOException("TBONReader: Custom type reader not found for " + customTypeName);
+				// POJO handling
+				try {
+					Class<?> cls = Class.forName(customTypeName, true, Thread.currentThread().getContextClassLoader());
+					Object obj = cls.getConstructor().newInstance();
+					Map<String, Object> properties = reader.nextValue();
+					for (Method method : cls.getMethods()) {
+						if (method.getParameterCount() != 1 || Modifier.isStatic(method.getModifiers())
+								|| method.getDeclaringClass() == Object.class) {
+							continue;
+						}
+
+						final String methodName = method.getName();
+						if (methodName.length() > 3 && methodName.startsWith("set")) {
+							char[] name = methodName.toCharArray();
+							name[3] = Character.toLowerCase(name[3]);
+							String fieldName = new String(name, 3, name.length - 3);
+							Object value = properties.get(fieldName);
+							if (value != null) {
+								method.invoke(obj, value);
+								properties.remove(fieldName);
+							}
+						}
+					}
+
+					for (Entry<String, Object> entry : properties.entrySet()) {
+						try {
+							Field field = cls.getField(entry.getKey());
+							int modifiers = field.getModifiers();
+							if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+								continue;
+							}
+
+							field.set(obj, entry.getValue());
+						} catch (NoSuchFieldException e) {
+							// continue to next entry, cannot set
+						}
+					}
+
+					return obj;
+				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+						| IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+						| SecurityException e) {
+					throw new IOException("TBONReader: cannot read custom type " + customTypeName, e);
+				}
 			}
 		});
 		READER_FUNCS.put(TBONToken.EndOfStructure, new ReaderFunc() {

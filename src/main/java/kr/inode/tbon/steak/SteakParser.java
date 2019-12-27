@@ -428,6 +428,7 @@ public class SteakParser implements TBONParser {
 				}
 				break;
 			case 1: // CustomType
+				++len;
 				currentToken = TBONToken.CustomType;
 				readToBuffer(len);
 				byte[] buf = new byte[len];

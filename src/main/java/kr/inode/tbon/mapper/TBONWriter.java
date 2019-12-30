@@ -350,8 +350,8 @@ public class TBONWriter implements AutoCloseable {
 			do {
 				for (Method method : cls.getDeclaredMethods()) {
 					int modifiers = method.getModifiers();
-					if (method.getParameterCount() != 0 || !Modifier.isPublic(modifiers)
-							|| Modifier.isStatic(method.getModifiers())) {
+					if (!Modifier.isPublic(modifiers) || Modifier.isStatic(method.getModifiers())
+							|| method.getParameterTypes().length != 0) {
 						continue;
 					}
 					final String methodName = method.getName();

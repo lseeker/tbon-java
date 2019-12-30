@@ -241,7 +241,9 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(BigInteger value) throws IOException {
-		if (BigInteger.ZERO.equals(value)) {
+		if (value == null) {
+			writeNull();
+		} else if (BigInteger.ZERO.equals(value)) {
 			ensureBuffer(1);
 			writeByte(0x40);
 		} else {
@@ -260,7 +262,9 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(BigDecimal value) throws IOException {
-		if (BigDecimal.ZERO.equals(value)) {
+		if (value == null) {
+			writeNull();
+		} else if (BigDecimal.ZERO.equals(value)) {
 			ensureBuffer(1);
 			writeByte(0x27);
 		} else {
@@ -295,11 +299,19 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(byte[] value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		write(ByteBuffer.wrap(value));
 	}
 
 	@Override
 	public void write(ByteBuffer value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		int len = value.remaining();
 		if (len < 63) {
 			ensureBuffer(1 + len);
@@ -314,11 +326,19 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(InputStream value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		write(Channels.newChannel(value));
 	}
 
 	@Override
 	public void write(ReadableByteChannel value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		ensureBuffer(3);
 		writeByte(0x8bf);
 		writeByte(0);
@@ -338,6 +358,10 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(String value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		byte[] b = value.getBytes(StandardCharsets.UTF_8);
 		ensureBuffer(6 + b.length);
 		if (b.length < 63) {
@@ -351,6 +375,10 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(Date value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		final Calendar c = Calendar.getInstance();
 		c.setTime(value);
 		write(c);
@@ -358,6 +386,10 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void write(Calendar value) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
 		int year = value.get(Calendar.YEAR);
 		int dayOfYear = value.get(Calendar.DAY_OF_YEAR);
 		int secondOfDay = value.get(Calendar.HOUR_OF_DAY) * 3600 + value.get(Calendar.MINUTE) * 60
@@ -450,7 +482,7 @@ public class SteakGenerator implements TBONGenerator {
 
 	@Override
 	public void writeCustomType(String typeName) throws IOException {
-		if (typeName.isEmpty()) {
+		if (typeName == null || typeName.isEmpty()) {
 			throw new IOException("SteakGenerator: custom type name should not empty");
 		}
 		byte[] b = typeName.getBytes(StandardCharsets.UTF_8);

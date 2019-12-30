@@ -1,6 +1,7 @@
 package kr.inode.tbon.mapper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -9,6 +10,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -86,18 +89,6 @@ public class TBONWriter implements AutoCloseable {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((BigDecimal) obj);
-			}
-		});
-		DEFAULT_WRITERS.put(Date.class, new TypeWriter() {
-			@Override
-			public void write(TBONWriter writer, Object obj) throws IOException {
-				writer.generator.write((Date) obj);
-			}
-		});
-		DEFAULT_WRITERS.put(Calendar.class, new TypeWriter() {
-			@Override
-			public void write(TBONWriter writer, Object obj) throws IOException {
-				writer.generator.write((Calendar) obj);
 			}
 		});
 		DEFAULT_WRITERS.put(boolean[].class, new TypeWriter() {
@@ -213,6 +204,18 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
+		INTERFACE_WRITERS.put(Date.class, new TypeWriter() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((Date) obj);
+			}
+		});
+		INTERFACE_WRITERS.put(Calendar.class, new TypeWriter() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((Calendar) obj);
+			}
+		});
 		INTERFACE_WRITERS.put(Iterable.class, new TypeWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
@@ -221,6 +224,24 @@ public class TBONWriter implements AutoCloseable {
 					writer.writeObject(element);
 				}
 				writer.generator.writeEndArray();
+			}
+		});
+		INTERFACE_WRITERS.put(InputStream.class, new TypeWriter() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((InputStream) obj);
+			}
+		});
+		INTERFACE_WRITERS.put(ReadableByteChannel.class, new TypeWriter() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((ReadableByteChannel) obj);
+			}
+		});
+		INTERFACE_WRITERS.put(ByteBuffer.class, new TypeWriter() {
+			@Override
+			public void write(TBONWriter writer, Object obj) throws IOException {
+				writer.generator.write((ByteBuffer) obj);
 			}
 		});
 	}

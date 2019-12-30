@@ -294,8 +294,7 @@ public class TBONReader implements AutoCloseable {
 					Object obj = cls.getConstructor().newInstance();
 					Map<String, Object> properties = reader.nextValue();
 					for (Method method : cls.getMethods()) {
-						if (method.getParameterCount() != 1 || Modifier.isStatic(method.getModifiers())
-								|| method.getDeclaringClass() == Object.class) {
+						if (method.getParameterCount() != 1 || Modifier.isStatic(method.getModifiers())) {
 							continue;
 						}
 

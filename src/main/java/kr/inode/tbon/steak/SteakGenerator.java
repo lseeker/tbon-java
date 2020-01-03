@@ -447,6 +447,8 @@ public class SteakGenerator implements TBONGenerator {
 		} else if (type == byte.class) {
 			throw new IOException("byte array should use write(byte[])");
 		}
+
+		writeVPInt(count);
 	}
 
 	@Override

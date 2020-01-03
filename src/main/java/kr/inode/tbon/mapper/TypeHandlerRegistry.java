@@ -6,15 +6,16 @@ import java.util.Map;
 public interface TypeHandlerRegistry {
 	void register(TypeHandler... typeHandlers);
 
-	void register(MultiTypeReader... multiTypeReaders);
+	void register(TypeReader... typeReaders);
 
-	void register(MultiTypeWriter... multiTypeWriters);
+	void register(TypeWriter... typeWriters);
 
-	Map<String, TypeHandler> handlerMapForReader();
+	Collection<TypeReader> typeReaders();
 
-	Map<Class<?>, TypeHandler> handlerMapForWriter();
+	Collection<TypeWriter> typeWriters();
 
-	Collection<MultiTypeReader> multiTypeReaders();
+	Map<String, TypeReader> explicitTypeReaderMap();
 
-	Collection<MultiTypeWriter> multiTypeWriters();
+	Map<Class<?>, TypeWriter> explicitTypeWriterMap();
+
 }

@@ -129,7 +129,13 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.Octet, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				return reader.parser.readOctet();
+				int len = reader.parser.getElementCount();
+				if (len != -1 && len < 32 * 1024) {
+					return reader.parser.readOctet();
+				} else {
+					// TODO use temp file with stream
+					return reader.parser.readOctet();
+				}
 			}
 		});
 		READER_FUNCS.put(TBONToken.String, new ReaderFunc() {
@@ -273,15 +279,15 @@ public class TBONReader implements AutoCloseable {
 			public Object read(TBONReader reader) throws IOException {
 				TBONParser parser = reader.parser;
 				String customTypeName = parser.getCustomTypeName();
-				if (reader.typeHandlerMap != null) {
-					TypeReader typeReader = reader.typeHandlerMap.get(customTypeName);
+				if (reader.explicitTypeReaderMap != null) {
+					TypeReader typeReader = reader.explicitTypeReaderMap.get(customTypeName);
 					if (typeReader != null) {
 						return typeReader.read(customTypeName, reader);
 					}
 				}
 
-				if (reader.multiTypeReaders != null) {
-					for (MultiTypeReader typeReader : reader.multiTypeReaders) {
+				if (reader.typeReaders != null) {
+					for (TypeReader typeReader : reader.typeReaders) {
 						if (typeReader.canRead(customTypeName)) {
 							return typeReader.read(customTypeName, reader);
 						}
@@ -305,6 +311,7 @@ public class TBONReader implements AutoCloseable {
 							String fieldName = new String(name, 3, name.length - 3);
 							Object value = properties.get(fieldName);
 							if (value != null) {
+								// TODO type check for octet
 								method.invoke(obj, value);
 								properties.remove(fieldName);
 							}
@@ -319,6 +326,7 @@ public class TBONReader implements AutoCloseable {
 								continue;
 							}
 
+							// TODO type check for octet
 							field.set(obj, entry.getValue());
 						} catch (NoSuchFieldException e) {
 							// continue to next entry, cannot set
@@ -342,18 +350,18 @@ public class TBONReader implements AutoCloseable {
 	}
 
 	private final TBONParser parser;
-	private final Map<String, TypeHandler> typeHandlerMap;
-	private final Collection<MultiTypeReader> multiTypeReaders;
+	private final Collection<TypeReader> typeReaders;
+	private final Map<String, TypeReader> explicitTypeReaderMap;
 
 	public TBONReader(TBONParser parser) {
 		this(parser, null, null);
 	}
 
-	public TBONReader(TBONParser parser, Map<String, TypeHandler> typeHandlerMap,
-			Collection<MultiTypeReader> multiTypeReaders) {
+	public TBONReader(TBONParser parser, Collection<TypeReader> typeReaders,
+			Map<String, TypeReader> explicitTypeReaderMap) {
 		this.parser = parser;
-		this.typeHandlerMap = typeHandlerMap;
-		this.multiTypeReaders = multiTypeReaders;
+		this.typeReaders = typeReaders;
+		this.explicitTypeReaderMap = explicitTypeReaderMap;
 	}
 
 	public TBONParser parser() {

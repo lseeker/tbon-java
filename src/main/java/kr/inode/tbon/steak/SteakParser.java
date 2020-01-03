@@ -2,6 +2,7 @@ package kr.inode.tbon.steak;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -83,11 +84,10 @@ public class SteakParser implements TBONParser {
 						parser.longValue = parser.buffer.getLong();
 						if (parser.longValue < 0) {
 							parser.currentToken = TBONToken.Integer;
-							byte[] bi = new byte[9];
-							ByteBuffer bb = ByteBuffer.wrap(bi);
+							ByteBuffer bb = ByteBuffer.wrap(parser.sharedBuffer);
 							bb.put((byte) 0);
 							bb.putLong(parser.longValue);
-							parser.objectValue = new BigInteger(bi);
+							parser.objectValue = new BigInteger(parser.sharedBuffer, 0, 9);
 						}
 					}
 				}
@@ -263,12 +263,10 @@ public class SteakParser implements TBONParser {
 						scale = parser.readVInt();
 					}
 					int biLen = parser.readVInt();
-					byte[] bi = new byte[biLen];
-					parser.readToBuffer(biLen);
-					parser.buffer.get(bi);
+					parser.readOnSharedBuffer(0, biLen);
 
 					parser.currentToken = TBONToken.Decimal;
-					parser.objectValue = new BigDecimal(new BigInteger(bi), scale);
+					parser.objectValue = new BigDecimal(new BigInteger(parser.sharedBuffer, 0, biLen), scale);
 				}
 			},
 			// 7 decimal, negative scale
@@ -281,14 +279,14 @@ public class SteakParser implements TBONParser {
 					}
 					scale = -scale;
 					int biLen = parser.readVInt();
-					byte[] bi = new byte[biLen];
-					parser.readToBuffer(biLen);
-					parser.buffer.get(bi);
+					parser.readOnSharedBuffer(0, biLen);
 
 					parser.currentToken = TBONToken.Decimal;
-					parser.objectValue = new BigDecimal(new BigInteger(bi), scale);
+					parser.objectValue = new BigDecimal(new BigInteger(parser.sharedBuffer, 0, biLen), scale);
 				}
 			} };
+
+	private static int initialBufferSize = 32;
 
 	private final ReadableByteChannel in;
 	private TBONToken currentToken = TBONToken.NotAvailable;
@@ -306,14 +304,38 @@ public class SteakParser implements TBONParser {
 	private char charValue;
 	private Object objectValue;
 
+	private byte[] sharedBuffer = new byte[initialBufferSize];
+
 	public SteakParser(ReadableByteChannel in) throws IOException {
 		this.in = in;
 		buffer.flip();
-		readToBuffer(5);
-		byte[] header = new byte[5];
-		buffer.get(header);
-		if (!Arrays.equals(header, SteakFactory.STEAK_HEADER)) {
+
+		// check header bytes
+		readOnSharedBuffer(0, 5);
+		if (!Arrays.equals(SteakFactory.STEAK_HEADER, 0, 5, sharedBuffer, 0, 5)) {
 			throw new IOException("SteakParser: header not matched");
+		}
+	}
+
+	private void readOnSharedBuffer(int offset, int len) throws IOException {
+		int limit = offset + len;
+		if (limit > sharedBuffer.length) {
+			int bufferSize = limit + limit % 8;
+			initialBufferSize = Math.max(initialBufferSize, bufferSize);
+			sharedBuffer = new byte[bufferSize];
+		}
+
+		if (len <= buffer.capacity()) {
+			readToBuffer(len);
+			buffer.get(sharedBuffer, offset, len);
+		} else {
+			while (offset < limit) {
+				int target = Math.min(buffer.capacity(), limit - offset);
+				readToBuffer(target);
+
+				buffer.get(sharedBuffer, offset, target);
+				offset += target;
+			}
 		}
 	}
 
@@ -341,22 +363,6 @@ public class SteakParser implements TBONParser {
 	private byte readByte() throws IOException {
 		readToBuffer(1);
 		return buffer.get();
-	}
-
-	private byte[] readOctet(int len) throws IOException {
-		byte[] b = new byte[len];
-		if (len <= buffer.capacity()) {
-			readToBuffer(len);
-			buffer.get(b);
-		} else {
-			int index = 0;
-			while (index < b.length) {
-				int target = Math.min(buffer.capacity(), b.length - index);
-				buffer.get(b, index, target);
-				index += target;
-			}
-		}
-		return b;
 	}
 
 	private int readVSInt() throws IOException {
@@ -421,19 +427,15 @@ public class SteakParser implements TBONParser {
 				if (len == 0) {
 					objectValue = BigInteger.ZERO;
 				} else {
-					readToBuffer(len);
-					byte[] buf = new byte[len];
-					buffer.get(buf);
-					objectValue = new BigInteger(buf);
+					readOnSharedBuffer(0, len);
+					objectValue = new BigInteger(sharedBuffer, 0, len);
 				}
 				break;
 			case 1: // CustomType
 				++len;
 				currentToken = TBONToken.CustomType;
-				readToBuffer(len);
-				byte[] buf = new byte[len];
-				buffer.get(buf);
-				objectValue = new String(buf, StandardCharsets.UTF_8);
+				readOnSharedBuffer(0, len);
+				objectValue = new String(sharedBuffer, 0, len, StandardCharsets.UTF_8);
 				break;
 			case 2: // Array
 				currentToken = TBONToken.Array;
@@ -452,22 +454,18 @@ public class SteakParser implements TBONParser {
 				currentToken = TBONToken.String;
 			}
 
+			inStream = false;
 			int len = b & 0x3f;
 			if (len == 0x3f) {
 				len = readVInt();
 				if (len == 0) {
 					inStream = true;
-					return true;
+					len = -1;
 				}
 			}
 
-			inStream = false;
-			byte[] octet = readOctet(len);
-			if (currentToken == TBONToken.String) {
-				objectValue = new String(octet, StandardCharsets.UTF_8);
-			} else {
-				objectValue = octet;
-			}
+			elementCount = len;
+			return true;
 		}
 
 		return true;
@@ -545,29 +543,37 @@ public class SteakParser implements TBONParser {
 	}
 
 	@Override
-	public byte[] readOctet() throws IOException {
-		if (inStream) {
-			try (ByteArrayOutputStream out = new ByteArrayOutputStream(1024)) {
-				int len = readVInt();
-				while (len > 0) {
-					out.write(readOctet(len));
-					len = readVInt();
-				}
-
-				inStream = false;
-				return out.toByteArray();
-			}
-		}
-		return (byte[]) objectValue;
+	public String readString() throws IOException {
+		return new String(readOctet(), StandardCharsets.UTF_8);
 	}
 
 	@Override
-	public String readString() throws IOException {
-		if (inStream) {
-			return new String(readOctet(), StandardCharsets.UTF_8);
+	public byte[] readOctet() throws IOException {
+		int capa = elementCount;
+		if (capa == -1) {
+			capa = 4096;
 		}
-		return (String) objectValue;
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream(capa)) {
+			readOctet(out);
+			return (byte[]) out.toByteArray();
+		}
 	}
+
+	public void readOctet(OutputStream out) throws IOException {
+		if (inStream) {
+			int len = readVInt();
+			while (len > 0) {
+				readOnSharedBuffer(0, len);
+				out.write(sharedBuffer, 0, len);
+				len = readVInt();
+			}
+
+			inStream = false;
+		} else {
+			readOnSharedBuffer(0, elementCount);
+			out.write(sharedBuffer, 0, elementCount);
+		}
+	};
 
 	@Override
 	public int getElementCount() {

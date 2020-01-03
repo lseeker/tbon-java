@@ -2,6 +2,7 @@ package kr.inode.tbon;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Calendar;
@@ -48,12 +49,14 @@ public interface TBONParser extends Closeable {
 
 	char getChar();
 
-	byte[] readOctet() throws IOException;
-
 	String readString() throws IOException;
 
+	byte[] readOctet() throws IOException;
+
+	void readOctet(OutputStream out) throws IOException;
+
 	/**
-	 * element count of array or object.
+	 * element count of array, object, or octet.
 	 * 
 	 * @return element count. -1 if undefined.
 	 */

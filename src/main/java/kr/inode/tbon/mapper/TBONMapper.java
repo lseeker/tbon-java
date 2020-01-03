@@ -31,8 +31,8 @@ public class TBONMapper {
 	}
 
 	public <T> T readFrom(ReadableByteChannel in) throws IOException {
-		try (TBONReader reader = new TBONReader(factory.createParser(in), typeHandlerRegistry.handlerMapForReader(),
-				typeHandlerRegistry.multiTypeReaders())) {
+		try (TBONReader reader = new TBONReader(factory.createParser(in), typeHandlerRegistry.typeReaders(),
+				typeHandlerRegistry.explicitTypeReaderMap())) {
 			return reader.nextValue();
 		}
 	}
@@ -42,8 +42,8 @@ public class TBONMapper {
 	}
 
 	public void writeTo(WritableByteChannel out, Object obj) throws IOException {
-		try (TBONWriter writer = new TBONWriter(factory.createGenerator(out), typeHandlerRegistry.handlerMapForWriter(),
-				typeHandlerRegistry.multiTypeWriters())) {
+		try (TBONWriter writer = new TBONWriter(factory.createGenerator(out), typeHandlerRegistry.typeWriters(),
+				typeHandlerRegistry.explicitTypeWriterMap())) {
 			writer.writeObject(obj);
 		}
 	}

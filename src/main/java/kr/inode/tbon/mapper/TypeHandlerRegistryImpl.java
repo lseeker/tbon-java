@@ -13,78 +13,89 @@ import java.util.Map;
 import java.util.Objects;
 
 class TypeHandlerRegistryImpl implements TypeHandlerRegistry {
-	private Map<String, TypeHandler> mapForReader = new HashMap<>();
-	private Map<Class<?>, TypeHandler> mapForWriter = Collections.emptyMap();
-	private List<MultiTypeReader> multiTypeReaders = new ArrayList<>();
-	private List<MultiTypeWriter> multiTypeWriters = new ArrayList<>();
-	private boolean needUpdateMapForWriter = false;
+	private List<TypeReader> typeReaders = new ArrayList<>();
+	private List<TypeWriter> typeWriters = new ArrayList<>();
+	private Map<String, TypeReader> explicitReaderMap = new HashMap<>();
+	private Map<Class<?>, TypeWriter> explicitWriterMap = Collections.emptyMap();
+	private boolean updateExplicitWriterMap = false;
 
 	@Override
 	public void register(TypeHandler... typeHandlers) {
 		Objects.requireNonNull(typeHandlers, "typeHandlers should not null");
 
-		for (TypeHandler typeHandler : typeHandlers) {
-			mapForReader.put(typeHandler.typeName(), typeHandler);
-			needUpdateMapForWriter = true;
+		register((TypeReader[]) typeHandlers);
+		register((TypeWriter[]) typeHandlers);
+	}
+
+	@Override
+	public void register(TypeReader... typeReaders) {
+		this.typeReaders.addAll(Arrays.asList(typeReaders));
+		for (TypeReader typeReader : typeReaders) {
+			if (typeReader instanceof ExplicitTypeReader) {
+				for (String typeName : ((ExplicitTypeReader) typeReader).typeNames()) {
+					explicitReaderMap.put(typeName, typeReader);
+				}
+			}
 		}
 	}
 
 	@Override
-	public void register(MultiTypeReader... multiTypeReaders) {
-		this.multiTypeReaders.addAll(Arrays.asList(multiTypeReaders));
+	public void register(TypeWriter... multiTypeWriters) {
+		this.typeWriters.addAll(Arrays.asList(multiTypeWriters));
+		updateExplicitWriterMap = true;
 	}
 
 	@Override
-	public void register(MultiTypeWriter... multiTypeWriters) {
-		this.multiTypeWriters.addAll(Arrays.asList(multiTypeWriters));
+	public Collection<TypeReader> typeReaders() {
+		return typeReaders;
 	}
 
 	@Override
-	public Map<String, TypeHandler> handlerMapForReader() {
-		return mapForReader;
+	public Collection<TypeWriter> typeWriters() {
+		return typeWriters;
 	}
 
 	@Override
-	public Map<Class<?>, TypeHandler> handlerMapForWriter() {
-		if (needUpdateMapForWriter) {
+	public Map<String, TypeReader> explicitTypeReaderMap() {
+		return explicitReaderMap;
+	}
+
+	@Override
+	public Map<Class<?>, TypeWriter> explicitTypeWriterMap() {
+		if (updateExplicitWriterMap) {
 			// create new writer map
-			List<TypeHandler> ordered = new LinkedList<>();
+			List<ExplicitTypeWriter> ordered = new LinkedList<>();
 
-			for (TypeHandler typeHandler : mapForReader.values()) {
-				ListIterator<TypeHandler> it = ordered.listIterator();
+			for (TypeWriter typeWriter : typeWriters) {
+				if (!(typeWriter instanceof ExplicitTypeWriter)) {
+					continue;
+				}
+
+				final ExplicitTypeWriter currentTypeWriter = (ExplicitTypeWriter) typeWriter;
+				final ListIterator<ExplicitTypeWriter> it = ordered.listIterator();
 
 				boolean added = false;
 				while (it.hasNext()) {
-					TypeHandler possibleParent = it.next();
-					if (possibleParent.typeClass().isAssignableFrom(typeHandler.typeClass())) {
+					ExplicitTypeWriter possibleParent = it.next();
+					if (possibleParent.typeClass().isAssignableFrom(currentTypeWriter.typeClass())) {
 						it.previous();
-						it.add(typeHandler);
+						it.add(currentTypeWriter);
 						added = true;
 						break;
 					}
 				}
 				if (!added) {
-					ordered.add(typeHandler);
+					ordered.add(currentTypeWriter);
 				}
 			}
 
-			Map<Class<?>, TypeHandler> newMap = new LinkedHashMap<>(mapForReader.size());
-			for (TypeHandler typeHandler : ordered) {
-				newMap.put(typeHandler.typeClass(), typeHandler);
+			Map<Class<?>, TypeWriter> newMap = new LinkedHashMap<>(ordered.size());
+			for (ExplicitTypeWriter typeWriter : ordered) {
+				newMap.put(typeWriter.typeClass(), typeWriter);
 			}
-			mapForWriter = newMap;
+			explicitWriterMap = newMap;
 		}
-		return mapForWriter;
-	}
 
-	@Override
-	public Collection<MultiTypeReader> multiTypeReaders() {
-		return multiTypeReaders;
+		return explicitWriterMap;
 	}
-
-	@Override
-	public Collection<MultiTypeWriter> multiTypeWriters() {
-		return multiTypeWriters;
-	}
-
 }

@@ -27,71 +27,75 @@ import java.util.Map.Entry;
 import kr.inode.tbon.TBONGenerator;
 
 public class TBONWriter implements AutoCloseable {
-	private static final Map<Class<?>, TypeWriter> DEFAULT_WRITERS = new HashMap<>();
-	private static final Map<Class<?>, TypeWriter> INTERFACE_WRITERS = new LinkedHashMap<>();
+	private static interface IntenalWriter {
+		void write(TBONWriter writer, Object obj) throws IOException;
+	}
+
+	private static final Map<Class<?>, IntenalWriter> DEFAULT_WRITERS = new HashMap<>();
+	private static final Map<Class<?>, IntenalWriter> INTERFACE_WRITERS = new LinkedHashMap<>();
 
 	static {
-		DEFAULT_WRITERS.put(Boolean.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Boolean.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Boolean) obj).booleanValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Byte.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Byte.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Byte) obj).byteValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Short.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Short.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Short) obj).shortValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Integer.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Integer.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Integer) obj).intValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Long.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Long.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Long) obj).longValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Float.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Float.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Float) obj).floatValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Double.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Double.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Double) obj).doubleValue());
 			}
 		});
-		DEFAULT_WRITERS.put(Character.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(Character.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write(((Character) obj).charValue());
 			}
 		});
-		DEFAULT_WRITERS.put(BigInteger.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(BigInteger.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((BigInteger) obj);
 			}
 		});
-		DEFAULT_WRITERS.put(BigDecimal.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(BigDecimal.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((BigDecimal) obj);
 			}
 		});
-		DEFAULT_WRITERS.put(boolean[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(boolean[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -102,13 +106,13 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(byte[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(byte[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((byte[]) obj);
 			}
 		});
-		DEFAULT_WRITERS.put(short[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(short[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -119,7 +123,7 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(int[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(int[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -130,7 +134,7 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(long[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(long[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -141,7 +145,7 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(float[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(float[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -152,7 +156,7 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(double[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(double[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -163,7 +167,7 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(char[].class, new TypeWriter() {
+		DEFAULT_WRITERS.put(char[].class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				int len = Array.getLength(obj);
@@ -174,14 +178,14 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		DEFAULT_WRITERS.put(String.class, new TypeWriter() {
+		DEFAULT_WRITERS.put(String.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((String) obj);
 			}
 		});
 
-		INTERFACE_WRITERS.put(Map.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(Map.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				Map<?, ?> map = (Map<?, ?>) obj;
@@ -193,7 +197,7 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndObject();
 			}
 		});
-		INTERFACE_WRITERS.put(Collection.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(Collection.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				Collection<?> c = (Collection<?>) obj;
@@ -204,19 +208,19 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		INTERFACE_WRITERS.put(Date.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(Date.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((Date) obj);
 			}
 		});
-		INTERFACE_WRITERS.put(Calendar.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(Calendar.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((Calendar) obj);
 			}
 		});
-		INTERFACE_WRITERS.put(Iterable.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(Iterable.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.writeStartArray();
@@ -226,19 +230,19 @@ public class TBONWriter implements AutoCloseable {
 				writer.generator.writeEndArray();
 			}
 		});
-		INTERFACE_WRITERS.put(InputStream.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(InputStream.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((InputStream) obj);
 			}
 		});
-		INTERFACE_WRITERS.put(ReadableByteChannel.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(ReadableByteChannel.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((ReadableByteChannel) obj);
 			}
 		});
-		INTERFACE_WRITERS.put(ByteBuffer.class, new TypeWriter() {
+		INTERFACE_WRITERS.put(ByteBuffer.class, new IntenalWriter() {
 			@Override
 			public void write(TBONWriter writer, Object obj) throws IOException {
 				writer.generator.write((ByteBuffer) obj);
@@ -247,8 +251,8 @@ public class TBONWriter implements AutoCloseable {
 	}
 
 	private final TBONGenerator generator;
-	private final Map<Class<?>, TypeHandler> typeHandlerMap;
-	private final Collection<MultiTypeWriter> multiTypeWriters;
+	private final Collection<TypeWriter> typeWriters;
+	private final Map<Class<?>, TypeWriter> explicitTypeWriterMap;
 	// guard for circular dependency
 	private final Deque<Object> guard = new ArrayDeque<>();
 
@@ -256,11 +260,11 @@ public class TBONWriter implements AutoCloseable {
 		this(generator, null, null);
 	}
 
-	public TBONWriter(final TBONGenerator generator, final Map<Class<?>, TypeHandler> typeHandlerMap,
-			Collection<MultiTypeWriter> multiTypeWriters) {
+	public TBONWriter(final TBONGenerator generator, final Collection<TypeWriter> typeWriters,
+			final Map<Class<?>, TypeWriter> explicitTypeWriterMap) {
 		this.generator = generator;
-		this.typeHandlerMap = typeHandlerMap;
-		this.multiTypeWriters = multiTypeWriters;
+		this.typeWriters = typeWriters;
+		this.explicitTypeWriterMap = explicitTypeWriterMap;
 	}
 
 	public TBONGenerator generator() {
@@ -277,17 +281,9 @@ public class TBONWriter implements AutoCloseable {
 		guard.push(obj);
 
 		try {
-			// Custom type handler
-			if (typeHandlerMap != null) {
-				TypeWriter typeWriter = typeHandlerMap.get(cls);
-				if (typeWriter == null) {
-					for (Entry<Class<?>, TypeHandler> entry : typeHandlerMap.entrySet()) {
-						if (entry.getKey().isAssignableFrom(cls)) {
-							typeWriter = entry.getValue();
-							break;
-						}
-					}
-				}
+			// explicit type writer
+			if (explicitTypeWriterMap != null) {
+				TypeWriter typeWriter = explicitTypeWriterMap.get(cls);
 
 				if (typeWriter != null) {
 					typeWriter.write(this, obj);
@@ -297,8 +293,8 @@ public class TBONWriter implements AutoCloseable {
 			}
 
 			// Custom multi type writer
-			if (multiTypeWriters != null) {
-				for (MultiTypeWriter typeWriter : multiTypeWriters) {
+			if (typeWriters != null) {
+				for (TypeWriter typeWriter : typeWriters) {
 					if (typeWriter.canWrite(obj)) {
 						typeWriter.write(this, obj);
 						handleAutoCloseable(obj);
@@ -308,13 +304,13 @@ public class TBONWriter implements AutoCloseable {
 			}
 
 			// default match writing
-			final TypeWriter typeWriter = DEFAULT_WRITERS.get(cls);
+			final IntenalWriter typeWriter = DEFAULT_WRITERS.get(cls);
 			if (typeWriter != null) {
 				typeWriter.write(this, obj);
 				return;
 			}
 
-			for (Entry<Class<?>, TypeWriter> entry : INTERFACE_WRITERS.entrySet()) {
+			for (Entry<Class<?>, IntenalWriter> entry : INTERFACE_WRITERS.entrySet()) {
 				if (entry.getKey().isAssignableFrom(cls)) {
 					entry.getValue().write(this, obj);
 					handleAutoCloseable(obj);

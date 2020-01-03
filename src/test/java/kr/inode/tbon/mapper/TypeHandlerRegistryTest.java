@@ -8,15 +8,20 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class TypeHandlerRegistryTest {
-	private static class CharSequenceHandler implements TypeHandler {
+	private static class CharSequenceHandler implements TypeHandler, ExplicitTypeWriter {
 		@Override
-		public String typeName() {
-			return "CS";
+		public Class<?> typeClass() {
+			return CharSequence.class;
 		}
 
 		@Override
-		public Class<CharSequence> typeClass() {
-			return CharSequence.class;
+		public boolean canRead(String typeName) {
+			return "CS".equals(typeName);
+		}
+
+		@Override
+		public boolean canWrite(Object obj) {
+			return obj instanceof CharSequence;
 		}
 
 		@Override
@@ -28,17 +33,23 @@ public class TypeHandlerRegistryTest {
 		public void write(TBONWriter writer, Object obj) throws IOException {
 
 		}
+
 	}
 
-	private static class StringHandler implements TypeHandler {
+	private static class StringHandler implements TypeHandler, ExplicitTypeWriter {
 		@Override
-		public String typeName() {
-			return "STR";
+		public Class<?> typeClass() {
+			return String.class;
 		}
 
 		@Override
-		public Class<String> typeClass() {
-			return String.class;
+		public boolean canRead(String typeName) {
+			return "STR".equals(typeName);
+		}
+
+		@Override
+		public boolean canWrite(Object obj) {
+			return obj instanceof String;
 		}
 
 		@Override
@@ -57,9 +68,9 @@ public class TypeHandlerRegistryTest {
 
 		mapper.typeHandlerRegistry().register(new CharSequenceHandler(), new StringHandler());
 
-		Iterator<Entry<Class<?>, TypeHandler>> it = mapper.typeHandlerRegistry().handlerMapForWriter().entrySet()
+		Iterator<Entry<Class<?>, TypeWriter>> it = mapper.typeHandlerRegistry().explicitTypeWriterMap().entrySet()
 				.iterator();
-		Entry<Class<?>, TypeHandler> entry = it.next();
+		Entry<Class<?>, TypeWriter> entry = it.next();
 
 		Assertions.assertEquals(String.class, entry.getKey());
 

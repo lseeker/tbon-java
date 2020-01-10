@@ -32,9 +32,7 @@ class TypeHandlerRegistryImpl implements TypeHandlerRegistry {
 		this.typeReaders.addAll(Arrays.asList(typeReaders));
 		for (TypeReader typeReader : typeReaders) {
 			if (typeReader instanceof ExplicitTypeReader) {
-				for (String typeName : ((ExplicitTypeReader) typeReader).typeNames()) {
-					explicitReaderMap.put(typeName, typeReader);
-				}
+				explicitReaderMap.put(((ExplicitTypeReader) typeReader).typeName(), typeReader);
 			}
 		}
 	}

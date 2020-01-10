@@ -1,10 +1,16 @@
 package kr.inode.tbon.mapper;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -133,8 +139,14 @@ public class TBONReader implements AutoCloseable {
 				if (len != -1 && len < 32 * 1024) {
 					return reader.parser.readOctet();
 				} else {
-					// TODO use temp file with stream
-					return reader.parser.readOctet();
+					File tempFile = File.createTempFile("tbon", ".octet");
+					tempFile.deleteOnExit();
+
+					try (FileOutputStream out = new FileOutputStream(tempFile)) {
+						reader.parser.readOctet(out);
+					}
+
+					return tempFile;
 				}
 			}
 		});
@@ -311,8 +323,7 @@ public class TBONReader implements AutoCloseable {
 							String fieldName = new String(name, 3, name.length - 3);
 							Object value = properties.get(fieldName);
 							if (value != null) {
-								// TODO type check for octet
-								method.invoke(obj, value);
+								method.invoke(obj, convertOctet(value, method.getParameterTypes()[0]));
 								properties.remove(fieldName);
 							}
 						}
@@ -326,8 +337,7 @@ public class TBONReader implements AutoCloseable {
 								continue;
 							}
 
-							// TODO type check for octet
-							field.set(obj, entry.getValue());
+							field.set(obj, convertOctet(entry.getValue(), field.getType()));
 						} catch (NoSuchFieldException e) {
 							// continue to next entry, cannot set
 						}
@@ -347,6 +357,23 @@ public class TBONReader implements AutoCloseable {
 				throw new IOException("TBONReader: EndOfStructure on not in structure.");
 			}
 		});
+	}
+
+	private static Object convertOctet(Object source, Class<?> target) throws IOException {
+		if (target == byte[].class) {
+			if (source instanceof File) {
+				return Files.readAllBytes(((File) source).toPath());
+			}
+		} else if (InputStream.class.isAssignableFrom(target)) {
+			// source should byte[] or File
+			if (source instanceof byte[]) {
+				return new ByteArrayInputStream((byte[]) source);
+			} else if (source instanceof File) {
+				return new FileInputStream((File) source);
+			}
+		}
+
+		return source;
 	}
 
 	private final TBONParser parser;

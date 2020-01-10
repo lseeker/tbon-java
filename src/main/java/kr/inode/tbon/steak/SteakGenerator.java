@@ -429,7 +429,7 @@ public class SteakGenerator implements TBONGenerator {
 			throw new IOException(type + " is not primitive");
 		}
 
-		ensureBuffer(1);
+		ensureBuffer(6);
 		if (type == int.class) {
 			writeByte(0x2a);
 		} else if (type == double.class) {
@@ -447,7 +447,6 @@ public class SteakGenerator implements TBONGenerator {
 		} else if (type == byte.class) {
 			throw new IOException("byte array should use write(byte[])");
 		}
-
 		writeVPInt(count);
 	}
 

@@ -87,7 +87,7 @@ public class SteakParser implements TBONParser {
 							ByteBuffer bb = ByteBuffer.wrap(parser.sharedBuffer);
 							bb.put((byte) 0);
 							bb.putLong(parser.longValue);
-							parser.objectValue = new BigInteger(parser.sharedBuffer, 0, 9);
+							parser.objectValue = new BigInteger(Arrays.copyOf(parser.sharedBuffer, 9));
 						}
 					}
 				}
@@ -266,7 +266,8 @@ public class SteakParser implements TBONParser {
 					parser.readOnSharedBuffer(0, biLen);
 
 					parser.currentToken = TBONToken.Decimal;
-					parser.objectValue = new BigDecimal(new BigInteger(parser.sharedBuffer, 0, biLen), scale);
+					parser.objectValue = new BigDecimal(new BigInteger(Arrays.copyOf(parser.sharedBuffer, biLen)),
+							scale);
 				}
 			},
 			// 7 decimal, negative scale
@@ -282,7 +283,8 @@ public class SteakParser implements TBONParser {
 					parser.readOnSharedBuffer(0, biLen);
 
 					parser.currentToken = TBONToken.Decimal;
-					parser.objectValue = new BigDecimal(new BigInteger(parser.sharedBuffer, 0, biLen), scale);
+					parser.objectValue = new BigDecimal(new BigInteger(Arrays.copyOf(parser.sharedBuffer, biLen)),
+							scale);
 				}
 			} };
 
@@ -312,7 +314,7 @@ public class SteakParser implements TBONParser {
 
 		// check header bytes
 		readOnSharedBuffer(0, 5);
-		if (!Arrays.equals(SteakFactory.STEAK_HEADER, 0, 5, sharedBuffer, 0, 5)) {
+		if (!Arrays.equals(SteakFactory.STEAK_HEADER, Arrays.copyOf(sharedBuffer, 5))) {
 			throw new IOException("SteakParser: header not matched");
 		}
 	}
@@ -428,7 +430,7 @@ public class SteakParser implements TBONParser {
 					objectValue = BigInteger.ZERO;
 				} else {
 					readOnSharedBuffer(0, len);
-					objectValue = new BigInteger(sharedBuffer, 0, len);
+					objectValue = new BigInteger(Arrays.copyOf(sharedBuffer, len));
 				}
 				break;
 			case 1: // CustomType

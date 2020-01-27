@@ -349,9 +349,11 @@ public class SteakGenerator implements TBONGenerator {
 			if (read == -1) {
 				break;
 			}
-			ensureBuffer(5 + read);
+			ensureBuffer(5);
 			writeVPInt(read);
-			flushBuffer(transferBuffer);
+			transferBuffer.flip();
+			writeOctet(transferBuffer);
+			transferBuffer.clear();
 		}
 		writeByte(0);
 	}

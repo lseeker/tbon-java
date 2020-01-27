@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>kr.inode.tbon</groupId>
 	<artifactId>tbon</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>1.0-SNAPSHOT</version>
 	<name>Typed Binary Object Notation</name>
 	<properties>
 		<maven.compiler.source>1.7</maven.compiler.source>

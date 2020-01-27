@@ -289,10 +289,10 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.CustomType, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				String customTypeName = parser.getCustomTypeName();
+				final TBONParser parser = reader.parser;
+				final String customTypeName = parser.getCustomTypeName();
 				if (reader.explicitTypeReaderMap != null) {
-					TypeReader typeReader = reader.explicitTypeReaderMap.get(customTypeName);
+					final TypeReader typeReader = reader.explicitTypeReaderMap.get(customTypeName);
 					if (typeReader != null) {
 						return typeReader.read(customTypeName, reader);
 					}
@@ -308,9 +308,10 @@ public class TBONReader implements AutoCloseable {
 
 				// POJO handling
 				try {
-					Class<?> cls = Class.forName(customTypeName, true, Thread.currentThread().getContextClassLoader());
-					Object obj = cls.getConstructor().newInstance();
-					Map<String, Object> properties = reader.nextValue();
+					final Class<?> cls = Class.forName(customTypeName, true,
+							Thread.currentThread().getContextClassLoader());
+					final Object obj = cls.getConstructor().newInstance();
+					final Map<String, Object> properties = reader.nextValue();
 					for (Method method : cls.getMethods()) {
 						if (Modifier.isStatic(method.getModifiers()) || method.getParameterTypes().length != 1) {
 							continue;
@@ -318,9 +319,9 @@ public class TBONReader implements AutoCloseable {
 
 						final String methodName = method.getName();
 						if (methodName.length() > 3 && methodName.startsWith("set")) {
-							char[] name = methodName.toCharArray();
+							final char[] name = methodName.toCharArray();
 							name[3] = Character.toLowerCase(name[3]);
-							String fieldName = new String(name, 3, name.length - 3);
+							final String fieldName = new String(name, 3, name.length - 3);
 							Object value = properties.get(fieldName);
 							if (value != null) {
 								method.invoke(obj, convertOctet(value, method.getParameterTypes()[0]));
@@ -330,14 +331,19 @@ public class TBONReader implements AutoCloseable {
 					}
 
 					for (Entry<String, Object> entry : properties.entrySet()) {
+						final Object value = entry.getValue();
+						if (value == null) {
+							continue;
+						}
+
 						try {
-							Field field = cls.getField(entry.getKey());
+							final Field field = cls.getField(entry.getKey());
 							int modifiers = field.getModifiers();
 							if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
 								continue;
 							}
 
-							field.set(obj, convertOctet(entry.getValue(), field.getType()));
+							field.set(obj, convertOctet(value, field.getType()));
 						} catch (NoSuchFieldException e) {
 							// continue to next entry, cannot set
 						}

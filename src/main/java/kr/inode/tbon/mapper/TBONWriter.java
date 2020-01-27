@@ -2,7 +2,6 @@ package kr.inode.tbon.mapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,14 +12,13 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -330,19 +328,9 @@ public class TBONWriter implements AutoCloseable {
 			}
 
 			// POJO handling
-			Map<String, AccessibleObject> properties = new HashMap<>();
-
-			for (Field field : cls.getFields()) {
-				int modifiers = field.getModifiers();
-				if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
-					continue;
-				}
-
-				properties.put(field.getName(), field);
-			}
+			final Map<String, Object> values = new HashMap<>();
 
 			Class<?> methodCls = cls;
-			List<String> methodNames = new ArrayList<>();
 			do {
 				for (Method method : cls.getDeclaredMethods()) {
 					int modifiers = method.getModifiers();
@@ -350,51 +338,64 @@ public class TBONWriter implements AutoCloseable {
 							|| method.getParameterTypes().length != 0) {
 						continue;
 					}
+
 					final String methodName = method.getName();
+					String key = null;
 					if (methodName.length() > 3 && methodName.startsWith("get")) {
-						if (methodNames.contains(methodName)) {
-							continue;
-						}
-						char[] name = methodName.toCharArray();
+						final char[] name = methodName.toCharArray();
 						name[3] = Character.toLowerCase(name[3]);
-						properties.put(new String(name, 3, name.length - 3), method);
-						methodNames.add(methodName);
+						key = new String(name, 3, name.length - 3);
 					} else if (methodName.length() > 2 && methodName.startsWith("is")) {
-						if (methodNames.contains(methodName)) {
-							continue;
-						}
-						char[] name = methodName.toCharArray();
+						final char[] name = methodName.toCharArray();
 						name[2] = Character.toLowerCase(name[2]);
-						properties.put(new String(name, 2, name.length - 2), method);
-						methodNames.add(methodName);
+						key = new String(name, 2, name.length - 2);
+					} else {
+						continue;
+					}
+
+					if (values.containsKey(key)) {
+						continue;
+					}
+
+					try {
+						values.put(key, method.invoke(obj));
+					} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+						throw new IOException("cannot write pojo: invoke error on " + method, e);
 					}
 				}
 				methodCls = methodCls.getSuperclass();
 			} while (methodCls != Object.class);
 
-			generator.writeCustomType(cls.getName());
+			for (Field field : cls.getFields()) {
+				int modifiers = field.getModifiers();
+				if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+					continue;
+				}
+				if (values.containsKey(field.getName())) {
+					continue;
+				}
 
-			generator.writeStartObject(properties.size());
-			for (Entry<String, AccessibleObject> entry : properties.entrySet()) {
-				generator.write(entry.getKey());
-				AccessibleObject ao = entry.getValue();
-				if (ao instanceof Field) {
-					try {
-						Object value = ((Field) ao).get(obj);
-						writeObject(value);
-					} catch (IllegalArgumentException | IllegalAccessException e) {
-						throw new IOException("cannot write " + cls, e);
-					}
-				} else if (ao instanceof Method) {
-					try {
-						Object value = ((Method) ao).invoke(obj);
-						writeObject(value);
-					} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-						throw new IOException("cannot write " + cls, e);
-					}
+				try {
+					values.put(field.getName(), field.get(obj));
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new IOException("cannot write pojo: field access error on " + field, e);
 				}
 			}
 
+			final Iterator<Entry<String, Object>> it = values.entrySet().iterator();
+			while (it.hasNext()) {
+				final Entry<String, Object> entry = it.next();
+				if (entry.getValue() == null) {
+					it.remove();
+				}
+			}
+
+			generator.writeCustomType(cls.getName());
+			generator.writeStartObject(values.size());
+			for (Entry<String, Object> entry : values.entrySet()) {
+				generator.write(entry.getKey());
+				writeObject(entry.getValue());
+			}
 			generator.writeEndObject();
 		} finally {
 			guard.pop();

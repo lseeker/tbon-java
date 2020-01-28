@@ -135,14 +135,14 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.Octet, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				int len = reader.parser.getElementCount();
+				final int len = reader.parser.getElementCount();
 				if (len != -1 && len < 32 * 1024) {
 					return reader.parser.readOctet();
 				} else {
-					File tempFile = File.createTempFile("tbon", ".octet");
+					final File tempFile = File.createTempFile("tbon", ".octet");
 					tempFile.deleteOnExit();
 
-					try (FileOutputStream out = new FileOutputStream(tempFile)) {
+					try (final FileOutputStream out = new FileOutputStream(tempFile)) {
 						reader.parser.readOctet(out);
 					}
 
@@ -159,9 +159,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfBoolean, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				boolean[] arr = new boolean[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final boolean[] arr = new boolean[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getBoolean();
@@ -173,9 +173,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfShort, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				short[] arr = new short[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final short[] arr = new short[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getShort();
@@ -187,9 +187,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfInt, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				int[] arr = new int[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final int[] arr = new int[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getInt();
@@ -201,9 +201,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfLong, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				long[] arr = new long[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final long[] arr = new long[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getLong();
@@ -215,9 +215,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfFloat, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				float[] arr = new float[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final float[] arr = new float[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getFloat();
@@ -229,9 +229,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfDouble, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				double[] arr = new double[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final double[] arr = new double[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getDouble();
@@ -243,9 +243,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.PrimitiveArrayOfChar, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				char[] arr = new char[len];
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final char[] arr = new char[len];
 				parser.next();
 				for (int i = 0; i < len; ++i) {
 					arr[i] = parser.getChar();
@@ -257,9 +257,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.Array, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				List<Object> list = new ArrayList<>(len == -1 ? 16 : len);
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final List<Object> list = new ArrayList<>(len == -1 ? 16 : len);
 				while (parser.next()) {
 					if (parser.currentToken() == TBONToken.EndOfStructure) {
 						break;
@@ -273,9 +273,9 @@ public class TBONReader implements AutoCloseable {
 		READER_FUNCS.put(TBONToken.Object, new ReaderFunc() {
 			@Override
 			public Object read(TBONReader reader) throws IOException {
-				TBONParser parser = reader.parser;
-				int len = parser.getElementCount();
-				Map<String, Object> map = new LinkedHashMap<>(len == -1 ? 16 : len * 2);
+				final TBONParser parser = reader.parser;
+				final int len = parser.getElementCount();
+				final Map<String, Object> map = new LinkedHashMap<>(len == -1 ? 16 : len * 2);
 				while (parser.next()) {
 					if (parser.currentToken() == TBONToken.EndOfStructure) {
 						break;
@@ -312,7 +312,7 @@ public class TBONReader implements AutoCloseable {
 							Thread.currentThread().getContextClassLoader());
 					final Object obj = cls.getConstructor().newInstance();
 					final Map<String, Object> properties = reader.nextValue();
-					for (Method method : cls.getMethods()) {
+					for (final Method method : cls.getMethods()) {
 						if (Modifier.isStatic(method.getModifiers()) || method.getParameterTypes().length != 1) {
 							continue;
 						}
@@ -322,7 +322,7 @@ public class TBONReader implements AutoCloseable {
 							final char[] name = methodName.toCharArray();
 							name[3] = Character.toLowerCase(name[3]);
 							final String fieldName = new String(name, 3, name.length - 3);
-							Object value = properties.get(fieldName);
+							final Object value = properties.get(fieldName);
 							if (value != null) {
 								method.invoke(obj, convertOctet(value, method.getParameterTypes()[0]));
 								properties.remove(fieldName);
@@ -330,7 +330,7 @@ public class TBONReader implements AutoCloseable {
 						}
 					}
 
-					for (Entry<String, Object> entry : properties.entrySet()) {
+					for (final Entry<String, Object> entry : properties.entrySet()) {
 						final Object value = entry.getValue();
 						if (value == null) {
 							continue;
@@ -338,7 +338,7 @@ public class TBONReader implements AutoCloseable {
 
 						try {
 							final Field field = cls.getField(entry.getKey());
-							int modifiers = field.getModifiers();
+							final int modifiers = field.getModifiers();
 							if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
 								continue;
 							}

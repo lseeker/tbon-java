@@ -110,7 +110,7 @@ public class SteakParser implements TBONParser {
 						break;
 					}
 					case 3: {
-						byte s = parser.readByte();
+						final byte s = parser.readByte();
 						parser.currentToken = TBONToken.Int16;
 						parser.shortValue = (short) s;
 						break;
@@ -127,7 +127,7 @@ public class SteakParser implements TBONParser {
 						break;
 					}
 					case 7: {
-						byte s = parser.readByte();
+						final byte s = parser.readByte();
 						parser.currentToken = TBONToken.Int16;
 						parser.shortValue = (short) (s & 0xff);
 						break;
@@ -185,10 +185,10 @@ public class SteakParser implements TBONParser {
 					case 2: // datetime
 						parser.currentToken = TBONToken.DateTime;
 
-						int year = parser.readVSInt();
-						int dayOfYear = parser.readVInt();
-						int secondOfDay = parser.readVInt();
-						long nanos = parser.readVLong();
+						final int year = parser.readVSInt();
+						final int dayOfYear = parser.readVInt();
+						final int secondOfDay = parser.readVInt();
+						final long nanos = parser.readVLong();
 
 						Calendar c = Calendar.getInstance();
 						c.clear();
@@ -262,7 +262,7 @@ public class SteakParser implements TBONParser {
 					if (scale == 7) {
 						scale = parser.readVInt();
 					}
-					int biLen = parser.readVInt();
+					final int biLen = parser.readVInt();
 					parser.readOnSharedBuffer(0, biLen);
 
 					parser.currentToken = TBONToken.Decimal;
@@ -279,7 +279,7 @@ public class SteakParser implements TBONParser {
 						scale = parser.readVInt();
 					}
 					scale = -scale;
-					int biLen = parser.readVInt();
+					final int biLen = parser.readVInt();
 					parser.readOnSharedBuffer(0, biLen);
 
 					parser.currentToken = TBONToken.Decimal;
@@ -320,7 +320,7 @@ public class SteakParser implements TBONParser {
 	}
 
 	private void readOnSharedBuffer(int offset, int len) throws IOException {
-		int limit = offset + len;
+		final int limit = offset + len;
 		if (limit > sharedBuffer.length) {
 			int bufferSize = limit + limit % 8;
 			initialBufferSize = Math.max(initialBufferSize, bufferSize);
@@ -369,7 +369,7 @@ public class SteakParser implements TBONParser {
 
 	private int readVSInt() throws IOException {
 		byte r = readByte();
-		boolean neg = (r & 0x40) == 0x40;
+		final boolean neg = (r & 0x40) == 0x40;
 		int i = r & 0x3f;
 		int shift = 6;
 		while (r < 0) {
@@ -411,7 +411,7 @@ public class SteakParser implements TBONParser {
 	public boolean next() throws IOException {
 		readToBuffer(1);
 
-		byte b = buffer.get();
+		final byte b = buffer.get();
 		if ((b & 0xc0) == 0) {
 			PARSER_FUNCS[(b & 0x38) >> 3].parse(b, this);
 		} else if ((b & 0x80) == 0) {

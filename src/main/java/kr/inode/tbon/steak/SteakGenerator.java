@@ -15,6 +15,11 @@ import java.util.Date;
 import kr.inode.tbon.TBONGenerator;
 
 public class SteakGenerator implements TBONGenerator {
+	/**
+	 * hard limit of stream with length. prevent parser reads all stream to memory.
+	 */
+	private static final int STREAM_LEN_LIMIT = 1024 * 1024;
+
 	private final WritableByteChannel out;
 	private final ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
 
@@ -334,28 +339,77 @@ public class SteakGenerator implements TBONGenerator {
 	}
 
 	@Override
+	public void write(InputStream value, int size) throws IOException {
+		if (value == null) {
+			writeNull();
+			return;
+		}
+		write(Channels.newChannel(value), size);
+	}
+
+	@Override
 	public void write(ReadableByteChannel value) throws IOException {
 		if (value == null) {
 			writeNull();
 			return;
 		}
-		ensureBuffer(3);
-		writeByte(0x8bf);
+		ensureBuffer(2);
+		writeByte(0xbf);
 		writeByte(0);
 
-		ByteBuffer transferBuffer = ByteBuffer.allocate(4096);
+		final ByteBuffer streamBuffer = ByteBuffer.allocate(4096);
 		for (;;) {
-			int read = value.read(transferBuffer);
+			int read = value.read(streamBuffer);
 			if (read == -1) {
 				break;
 			}
-			ensureBuffer(5);
-			writeVPInt(read);
-			transferBuffer.flip();
-			writeOctet(transferBuffer);
-			transferBuffer.clear();
+			if (read > 0) {
+				ensureBuffer(5 + read);
+				writeVPInt(read);
+				streamBuffer.flip();
+				writeOctet(streamBuffer);
+				streamBuffer.clear();
+			}
 		}
 		writeByte(0);
+	}
+
+	@Override
+	public void write(ReadableByteChannel value, int size) throws IOException {
+		if (size > STREAM_LEN_LIMIT) {
+			write(value);
+			return;
+		}
+		if (value == null) {
+			writeNull();
+			return;
+		}
+
+		if (size < 0) {
+			throw new IOException("stream size should positive!");
+		} else if (size < 63) {
+			ensureBuffer(1 + size);
+			writeByte(0x80 + size);
+		} else {
+			ensureBuffer(6 + size);
+			writeByte(0xbf);
+			writeVPInt(size);
+		}
+
+		int transferred = 0;
+		while (size > transferred) {
+			if (!buffer.hasRemaining()) {
+				flush();
+			}
+			buffer.limit(Math.min(buffer.capacity(), buffer.position() + size - transferred));
+
+			int read = value.read(buffer);
+			if (read == -1) {
+				throw new IOException(
+						"Stream end before specified size " + size + " (transferred=" + transferred + ")");
+			}
+			transferred += read;
+		}
 	}
 
 	@Override
@@ -364,7 +418,7 @@ public class SteakGenerator implements TBONGenerator {
 			writeNull();
 			return;
 		}
-		byte[] b = value.getBytes(StandardCharsets.UTF_8);
+		final byte[] b = value.getBytes(StandardCharsets.UTF_8);
 		ensureBuffer(6 + b.length);
 		if (b.length < 63) {
 			writeByte(0xc0 + b.length);
@@ -392,11 +446,11 @@ public class SteakGenerator implements TBONGenerator {
 			writeNull();
 			return;
 		}
-		int year = value.get(Calendar.YEAR);
-		int dayOfYear = value.get(Calendar.DAY_OF_YEAR);
-		int secondOfDay = value.get(Calendar.HOUR_OF_DAY) * 3600 + value.get(Calendar.MINUTE) * 60
+		final int year = value.get(Calendar.YEAR);
+		final int dayOfYear = value.get(Calendar.DAY_OF_YEAR);
+		final int secondOfDay = value.get(Calendar.HOUR_OF_DAY) * 3600 + value.get(Calendar.MINUTE) * 60
 				+ value.get(Calendar.SECOND);
-		long nanos = value.get(Calendar.MILLISECOND) * 1_000_000L;
+		final long nanos = value.get(Calendar.MILLISECOND) * 1_000_000L;
 
 		ensureBuffer(26);
 		writeByte(0x22);
@@ -488,7 +542,7 @@ public class SteakGenerator implements TBONGenerator {
 		if (typeName == null || typeName.isEmpty()) {
 			throw new IOException("SteakGenerator: custom type name should not empty");
 		}
-		byte[] b = typeName.getBytes(StandardCharsets.UTF_8);
+		final byte[] b = typeName.getBytes(StandardCharsets.UTF_8);
 		if (b.length < 16) {
 			ensureBuffer(1 + b.length);
 			writeByte(0x50 + b.length - 1);

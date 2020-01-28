@@ -41,7 +41,11 @@ public interface TBONGenerator extends Closeable {
 
 	void write(InputStream value) throws IOException;
 
+	void write(InputStream value, int size) throws IOException;
+
 	void write(ReadableByteChannel value) throws IOException;
+
+	void write(ReadableByteChannel value, int size) throws IOException;
 
 	void write(String value) throws IOException;
 
